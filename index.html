@@ -1,103 +1,493 @@
 <html>
 
 <head>
+<style>
+html {
+  scroll-behavior: smooth;
+}
+
+div.exercise {
+  /* font-family: Verdana, Geneva, Tahoma, sans-serif; */
+  font-family: cursive;
+  font-size: 50px;
+  transition-property: font-size;
+  transition-duration: 0.3s;
+}
+
+div.exercise.current {
+  font-weight: bold;
+  font-size: 60px;
+  transition-property: font-size;
+  transition-duration: 0.3s;
+}
+
+div.separator {
+  height: 100;
+}
+
+#exercises {
+  margin-top: 30px;
+}
+
+#action_label {
+  /* font-family: Verdana, Geneva, Tahoma, sans-serif; */
+  font-family: cursive;
+  /* font-weight: 900; */
+  font-size: 75px;
+  text-align: center;
+}
+
+#work_label {
+  color: green;
+}
+
+#rest_label {
+  color: black;
+}
+
+#placeholder-for-scroll { height: 100%; }
+
+div.time-label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-family: cursive;
+  font-size: medium;
+}
+
+.container {
+  width: 48%;
+}
+
+#timer-container {
+  font-family: Arial, Helvetica, sans-serif;
+  right: 0;
+  width: 48%;
+  position: fixed;
+  margin-right: 30px;
+}
+
+#timer {
+  width: auto;
+  text-align: center;
+  font-family: monospace;
+  font-size: 100px;
+  background-color: #E7E7E7;
+  color: black;
+}
+
+#timer.work {
+  background-color: #4CAF50;
+  color: white;
+  /* color: green; */
+}
+
+#timer.rest {
+  background-color: crimson;
+  color: white;
+  /* color: crimson; */
+}
+
+#timer.inactive {
+  background-color: #E7E7E7;
+  color: black;
+}
+
+#start_container {
+  text-align: center;
+  width: auto;
+}
+
+#start_button {
+  width: 100%;
+  
+  background-color: #E7E7E7;
+  color: white;
+  color: black;
+  text-decoration: none;
+  border: none;
+  margin-top: 2px;
+  padding: 10px;
+  font-size: 32px;
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+}
+
+.exercise_area {
+  flex-grow: 1;
+}
+</style>
 </head>
 
 <body>
-    volume
-<input type="range" id="vIn" value="30" min="0" max="100" oninput="show()" />
-<span id="vOut"></span><br>
-duration
-<input type="range" id="dIn" value="700" min="1" max="5000" oninput="show()" />
-<span id="dOut"></span><br>
-interval
-<input type="range" id="intervalIn"  value="15" min="5" max="60" oninput="show()" />
-<span id="intervalOut"></span>
-<br>
-<div id="timerState"></div>
-<br>
 
-<button id="toggleButton" onclick='startTimer();'>Start Timer</button>
-<!-- <button onclick='stopTimer();'>Stop Timer</button> -->
+<!-- <a href="#" onclick="play()">Play</a>
+<a href="#" onclick="define()">Define</a> -->
+<div style="display: none;">
+    Sets: <span id='num_sets'></span>
+    Exercises: <span id='num_exercises'></span>
+</div>
+<div style="display: none;">
+    Set: <span id='current_set'></span>
+    Exercise: <span id='current_exercise'></span>
+</div>
+<div style="display: none;">
+Work: <span id='current_work'></span>
+Rest: <span id='current_rest'></span>
+</div>
 
-    <script>
-        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        var volume = 0.2;
-        var duration = 400;
-        var intervalSeconds;
-        var intervalId;
-        var isTimerRunning = false;
-
-        show();
-
-        function show() {
-            volume = document.getElementById("vIn").value / 100;
-            document.getElementById("vOut").innerHTML = volume;
-
-            duration = document.getElementById("dIn").value;
-            document.getElementById("dOut").innerHTML = duration + ' ms';
-
-            intervalSeconds = document.getElementById("intervalIn").value;
-            document.getElementById("intervalOut").innerHTML = intervalSeconds + ' seconds';
-
-            if(isTimerRunning) {
-                document.getElementById("timerState").innerHTML = "Timer Started";
-                document.getElementById("toggleButton").innerHTML = "Stop Timer";
-            } else {
-                document.getElementById("timerState").innerHTML = "Timer Stopped";
-                document.getElementById("toggleButton").innerHTML = "Start Timer";
-            }
-        }
+</div>
+<div class='container'>
+    <div class='exercise_area'>
+        <div id='play_area'>
+            <div id='exercises' onclick="define()"></div>
+            <div id='placeholder-for-scroll'></div>
+        </div>
+    
+        <div style="display:none"  id='define_area'>
+            <span id=>Exercises:</span>
+            <div>
+                <textarea id='exercises_def' rows='30' cols='40'
+                onchange='reload()'
+                onblur='play()'>
+        5/3
+        Exercise 1
+        Exercise 2
+        Exercise 3
         
-        function startTimer() {
-            if(intervalId) {
+        6/4
+        Ex 1
+        Ex 2
+                </textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<div id='timer-container'>
+    <!-- <div>
+        <span>Sets: 2</span>
+        <span>Exercises: 5</span>
+    </div> 
+    <div>
+        <span>Work: 30</span>
+        <span>Rest: 5</span>
+    </div> -->
+    <div id='action_label'>
+        <div id='work_label'>
+            WORK
+        </div>
+        <div id='rest_label'>
+            REST
+        </div>
+        <div id='ready_label'>
+            READY
+        </div>
+        <div id='paused_label'>
+            PAUSED
+        </div>
+    </div>
+    <div id='timer'>
+        <span id='mins'></span>:<span id='secs'></span>
+    </div>
+    <div id='start_container'>
+        <button onclick="start()" id='start_button'>start</button>
+    </div>
+    
+</div>
+
+
+
+
+<script>
+const id = function(id) { return document.getElementById(id); };
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const NOT_STARTED = 1;
+const PLAYING = 2;
+const PAUSED = 3;
+let state = NOT_STARTED;
+let intervalId = null;
+
+let isWork = true;
+let work = 2;
+let rest = 2;
+let numberOfExercises = 0;
+let currentSetIndex = 0;
+let currentSetExercise = 0;
+let currentExercise = 0;
+let isDefineMode = false;
+let sets = [];
+
+let remaining = work;
+
+window.onresize = updateUi;
+
+const storedExercises = localStorage.getItem('exercises');
+if (storedExercises != null && storedExercises.trim() != "") {
+    id('exercises_def').value = storedExercises;
+}
+
+reload();
+
+function start() {
+    shortBeep();
+    switch(state) {
+        case NOT_STARTED:
+            state = PLAYING;
+            break;
+        case PLAYING:
+            state = PAUSED; 
+            break;
+        case PAUSED:
+            state = PLAYING;
+            break;
+    }
+
+    updateUi();
+    if(intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
+    if (state == PLAYING) {
+        intervalId = setInterval(
+            function() {
+                updateSecond();
+            }, 1000
+        );
+    }
+}
+
+function updateSecond() {
+    if(remaining > 0) {
+        remaining--;
+        if(remaining == 0) {
+            longBeep();
+            isWork = !isWork;
+            // If it's the last exercise in the set, move on to the next set.
+            if(currentSetExercise >= sets[currentSetIndex].numExercises - 1) {
+                currentSetExercise = 0;
+                if(currentSetIndex == sets.length - 1) {
+                    currentSetIndex = 0;
+                } else {
+                    currentSetIndex++;
+                }
                 clearInterval(intervalId);
                 intervalId = null;
-            }
-
-            if (isTimerRunning) {
-                isTimerRunning = false;
+                state = NOT_STARTED;
+                isWork = true;
+                work = sets[currentSetIndex].work;
+                rest = sets[currentSetIndex].rest;
+                remaining = work;
+            } 
+            else if(!isWork) {
+                remaining = rest;
+                currentExercise++;
+                currentSetExercise++;
             } else {
-                isTimerRunning = true;
-                beep();
-    
-                intervalId = setInterval(
-                    function() {
-                        beep();
-                    }, intervalSeconds * 1000
-                );
+                remaining = work;
             }
-            show();
+        }
+    } 
+    updateUi();
+}
+
+    // For each row in exercises_def, add an element to
+    // exercises.
+
+function play() {
+    isDefineMode = false;
+    const exercisesString = id("exercises_def").value;
+    localStorage.setItem('exercises', exercisesString);
+    updateUi();
+}
+
+function define() {
+    isDefineMode = true;
+    updateUi();
+    id('exercises_def').focus();
+}
+
+function updateRemainingTime() {
+   const mins = Math.floor(remaining / 60);
+   const secs = remaining % 60;
+   id("mins").innerText = mins.toString().padStart(2, "0");
+   id("secs").innerText = secs.toString().padStart(2, "0");
+}
+
+function updateUi() {
+    const timer = id('timer');
+    id("ready_label").style.display = "none";
+    id("work_label").style.display = "none";
+    id("rest_label").style.display = "none";
+    id("paused_label").style.display = "none";
+    switch(state) {
+        case NOT_STARTED:
+            id('start_button').innerText = 'start';
+            timer.classList.remove('rest', 'work')
+            timer.classList.add('inactive');
+            id("ready_label").style.display = "block";
+            break;
+        case PLAYING:
+            id("ready_label").style.display = "none";
+            if(id('start_button').innerText != 'pause') {
+                id('start_button').innerText = 'pause';
+            }
+            if(isWork) {
+                timer.classList.remove('rest', 'inactive');
+                timer.classList.add('work');
+                id("work_label").style.display = "block";
+            } else {
+                timer.classList.remove('work', 'inactive');
+                timer.classList.add('rest');
+                id("rest_label").style.display = "block";
+            }
+            break;
+        case PAUSED:
+            id('start_button').innerText = 'resume';
+            timer.classList.remove('rest', 'work')
+            timer.classList.add('inactive');
+            id("paused_label").style.display = "block";
+            break;
+    }
+    updateRemainingTime();
+    id('play_area').style.display = isDefineMode ? "none" : "block";
+    id('timer-container').style.display = isDefineMode ? "none" : "block";
+    id('define_area').style.display = isDefineMode ? "block" : "none";
+    id("current_work").innerText = work;
+    id("current_rest").innerText = rest;
+    id('num_sets').innerText = sets.length;
+    id('num_exercises').innerText = 
+        sets.reduce((a, c) => a + c.numExercises, 0);
+    id('current_set').innerText = currentSetIndex;
+    id('current_exercise').innerText = currentSetExercise;
+    const timerContainer = id('timer-container');
+    const actionLabel = id('action_label');
+    timerContainer.style.top = Math.max(0, 
+        window.innerHeight * 0.5 - timer.offsetHeight / 2
+        - actionLabel.offsetHeight);
+
+
+    // Give a selected style to the current exercise.
+    const exercisesContainer = id("exercises");
+    const previouslySelected = document.querySelector('div.exercise.current');
+    const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
+    if (previouslySelected != currentExerciseElement) {
+        if (previouslySelected != null) {
+            previouslySelected.classList.remove('current');
+        }
+        if (currentExerciseElement != null) {
+            currentExerciseElement.classList.add("current");
+            // Scroll to the center of the current exercise.
+            const offsetTop = currentExerciseElement.getBoundingClientRect().top + document.body.scrollTop;
+            const windowHeight = window.innerHeight;
+            window.scrollTo(0, offsetTop - windowHeight / 2 + currentExerciseElement.offsetHeight / 2);
+        }
+    }
+}
+
+function reload() {
+    let exercisesString = document.getElementById("exercises_def").value;
+    exercisesString = exercisesString.trim();
+    let lines = exercisesString.split("\n");
+    let exercisesContainer = id("exercises");
+    // Clear all exercies
+    while (exercisesContainer.firstChild) {
+        exercisesContainer.removeChild(exercisesContainer.lastChild);
+    }
+    const timeSpecRegEx = /^(\d+)\/(\d+)$/;
+    let setIndex = 0;
+    // New lines are set separator. Initialize sawNewLine to true
+    // so we always begin with a newste.
+    let sawNewLine = true;
+    sets = [];
+    sets.push({numExercises: 0});
+    for(let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if(sawNewLine) {
+            if(line == "") {
+                // Skip consecutive new lines.
+                continue;
+            }
+        }
+        if(sawNewLine) {
+            sawNewLine = false;
+            // Initialize work/rest time for new set.
+            const match = line.match(timeSpecRegEx);
+            console.log(line);
+            console.log("match: " + match);
+            if(match) {
+                sets[setIndex].work = match[1];
+                sets[setIndex].rest = match[2];
+                const timeLabel = document.createElement("div");
+                timeLabel.innerText = 'Work: ' + match[1] + ', rest: ' + match[2];
+                timeLabel.classList.add('time-label');
+                exercisesContainer.appendChild(timeLabel);
+            } else {
+                // Use whatever the previous work/rest times were
+                sets[setIndex].work = work;
+                sets[setIndex].rest = rest;
+            }
+            continue;
         }
 
-        function stopTimer() {
-            clearInterval(intervalId);
+        if(line.trim() == "") {
+            const setSeparator = document.createElement("div");
+            setSeparator.classList.add('separator');
+            exercisesContainer.appendChild(setSeparator);
+            sawNewLine = true;
+            sets.push({numExercises: 0});
+            setIndex++;
+            continue;
         }
 
-        function beep() {
-            frequency = 490;
-            type = 'triangle';
+        const exerciseDiv = document.createElement("div");
+        sets[sets.length - 1].numExercises++;
+        exerciseDiv.id = 's' + setIndex + 'e' + (sets[setIndex].numExercises - 1);
+        exerciseDiv.classList.add('exercise');
+        const textNode = document.createTextNode(line);
+        exerciseDiv.appendChild(textNode);
+        exercisesContainer.appendChild(exerciseDiv);
+    }
+    numberOfExercises = lines.length;
+    work = sets[currentSetIndex].work;
+    rest = sets[currentSetIndex].rest;
+    remaining = work;
 
-            var oscillator = audioCtx.createOscillator();
-            var gainNode = audioCtx.createGain();
+    
+    updateUi();
+}
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+function shortBeep() {
+    beep(100);
+}
 
-            gainNode.gain.value = volume;
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
+function longBeep() {
+    beep(1000);
+}
 
-            oscillator.start();
+function beep(duration) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
 
-            setTimeout(
-                function () {
-                    oscillator.stop();
-                },
-                duration
-            );
-        };
-    </script>
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    gainNode.gain.value = 0.3;
+    oscillator.frequency.value = 490;
+    oscillator.type = 'triangle';
+
+    oscillator.start();
+
+    setTimeout(
+        function () {
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.00001, audioCtx.currentTime + 0.4
+            )
+            // oscillator.stop();
+        },
+        duration
+    );
+};
+    
+</script>
 </body>
-
-</html>
