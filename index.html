@@ -264,8 +264,12 @@ function updateSecond() {
         if(remaining == 0) {
             longBeep();
             if(isWork) {
-                // If we just finished work for the last exercise in the set.
-                if(currentSetExercise == sets[currentSetIndex].numExercises - 1) {
+                if(currentSetExercise < sets[currentSetIndex].numExercises - 1) {
+                    // This is not the last exercise. Move on to the rest period.
+                    isWork = false;
+                    remaining = rest;
+                } else {
+                    // We just finished work for the last exercise in the set.
                     // Move on to the next set, or back to the first set.
                     currentSetExercise = 0;
                     if(currentSetIndex == sets.length - 1) {
@@ -280,10 +284,6 @@ function updateSecond() {
                     work = sets[currentSetIndex].work;
                     rest = sets[currentSetIndex].rest;
                     remaining = work;
-                } else {
-                    // This is not the last exercise. Move on to the rest period.
-                    isWork = false;
-                    remaining = rest;
                 }
             } else {
                 // Just finished rest period. Move on to the next exercise in the set.
@@ -292,34 +292,6 @@ function updateSecond() {
                 currentExercise++;
                 currentSetExercise++;
             }
-
-
-            // // If it's the last exercise in the set, move on to the next set.
-            // // There is no rest mode for the last exercise.
-            // if(currentSetExercise > sets[currentSetIndex].numExercises - 1) {
-            //     currentSetExercise = 0;
-            //     if(currentSetIndex == sets.length - 1) {
-            //         currentSetIndex = 0;
-            //     } else {
-            //         currentSetIndex++;
-            //     }
-            //     clearInterval(intervalId);
-            //     intervalId = null;
-            //     state = NOT_STARTED;
-            //     isWork = true;
-            //     work = sets[currentSetIndex].work;
-            //     rest = sets[currentSetIndex].rest;
-            //     remaining = work;
-            // } 
-            // else if(!isWork) {
-            //     isWork = true;
-            //     remaining = rest;
-            //     currentExercise++;
-            //     currentSetExercise++;
-            // } else {
-            //     isWork = false;
-            //     remaining = work;
-            // }
         }
     } 
     updateUi();
