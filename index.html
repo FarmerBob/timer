@@ -423,12 +423,12 @@ function reload() {
                 timeLabel.innerText = 'Work: ' + match[1] + ', rest: ' + match[2];
                 timeLabel.classList.add('time-label');
                 exercisesContainer.appendChild(timeLabel);
+                continue;
             } else {
                 // Use whatever the previous work/rest times were
                 sets[setIndex].work = work;
                 sets[setIndex].rest = rest;
             }
-            continue;
         }
 
         if(line.trim() == "") {
