@@ -263,30 +263,63 @@ function updateSecond() {
         remaining--;
         if(remaining == 0) {
             longBeep();
-            isWork = !isWork;
-            // If it's the last exercise in the set, move on to the next set.
-            if(currentSetExercise >= sets[currentSetIndex].numExercises - 1) {
-                currentSetExercise = 0;
-                if(currentSetIndex == sets.length - 1) {
-                    currentSetIndex = 0;
+            if(isWork) {
+                // If we just finished work for the last exercise in the set.
+                if(currentSetExercise == sets[currentSetIndex].numExercises - 1) {
+                    // Move on to the next set, or back to the first set.
+                    currentSetExercise = 0;
+                    if(currentSetIndex == sets.length - 1) {
+                        currentSetIndex = 0;
+                    } else {
+                        currentSetIndex++;
+                    }
+                    // Stop the timer.
+                    clearInterval(intervalId);
+                    intervalId = null;
+                    state = NOT_STARTED;
+                    work = sets[currentSetIndex].work;
+                    rest = sets[currentSetIndex].rest;
+                    remaining = work;
                 } else {
-                    currentSetIndex++;
+                    // This is not the last exercise. Move on to the rest period.
+                    isWork = false;
+                    remaining = rest;
                 }
-                clearInterval(intervalId);
-                intervalId = null;
-                state = NOT_STARTED;
+            } else {
+                // Just finished rest period. Move on to the next exercise in the set.
                 isWork = true;
-                work = sets[currentSetIndex].work;
-                rest = sets[currentSetIndex].rest;
                 remaining = work;
-            } 
-            else if(!isWork) {
-                remaining = rest;
                 currentExercise++;
                 currentSetExercise++;
-            } else {
-                remaining = work;
             }
+
+
+            // // If it's the last exercise in the set, move on to the next set.
+            // // There is no rest mode for the last exercise.
+            // if(currentSetExercise > sets[currentSetIndex].numExercises - 1) {
+            //     currentSetExercise = 0;
+            //     if(currentSetIndex == sets.length - 1) {
+            //         currentSetIndex = 0;
+            //     } else {
+            //         currentSetIndex++;
+            //     }
+            //     clearInterval(intervalId);
+            //     intervalId = null;
+            //     state = NOT_STARTED;
+            //     isWork = true;
+            //     work = sets[currentSetIndex].work;
+            //     rest = sets[currentSetIndex].rest;
+            //     remaining = work;
+            // } 
+            // else if(!isWork) {
+            //     isWork = true;
+            //     remaining = rest;
+            //     currentExercise++;
+            //     currentSetExercise++;
+            // } else {
+            //     isWork = false;
+            //     remaining = work;
+            // }
         }
     } 
     updateUi();
@@ -414,8 +447,6 @@ function reload() {
             sawNewLine = false;
             // Initialize work/rest time for new set.
             const match = line.match(timeSpecRegEx);
-            console.log(line);
-            console.log("match: " + match);
             if(match) {
                 sets[setIndex].work = match[1];
                 sets[setIndex].rest = match[2];
