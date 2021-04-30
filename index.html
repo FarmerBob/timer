@@ -25,6 +25,10 @@ div.separator {
   height: 100;
 }
 
+div.set {
+    margin-bottom: 60px;
+}
+
 #exercises {
   margin-top: 30px;
 }
@@ -46,9 +50,19 @@ div.separator {
 #placeholder-for-scroll-top { height: 50%; }
 #placeholder-for-scroll-bottom { height: 100%; }
 
-div.time-label {
+div.set-info {
+  background-color: white;
   font-family: Arial, Helvetica, sans-serif;
   font-size: medium;
+  position: sticky;
+  top: 0;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid black;
+}
+
+div.set-title {
+    font-size: 40px;
 }
 
 #timer-container {
@@ -58,6 +72,8 @@ div.time-label {
   position: fixed;
   margin-right: 30px;
   background-color: white;
+  border-bottom: 1px;
+  border-color: black;
   box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;
 }
 
@@ -201,7 +217,6 @@ let intervalId = null;
 let isWork = true;
 let work = 2;
 let rest = 2;
-let numberOfExercises = 0;
 let currentSetIndex = 0;
 let currentSetExercise = 0;
 let currentExercise = 0;
@@ -285,9 +300,6 @@ function updateSecond() {
     } 
     updateUi();
 }
-
-    // For each row in exercises_def, add an element to
-    // exercises.
 
 function play() {
     isDefineMode = false;
@@ -376,75 +388,114 @@ function updateUi() {
             window.scrollTo(0, offsetTop - windowHeight / 2 + currentExerciseElement.offsetHeight / 2);
         }
     }
+
+    const timerHeight = id('timer-container').offsetHeight;
+    document.querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
+}
+
+function updateExercisesUi() {
+    let exercisesContainer = id("exercises");
+    // Clear all exercies
+    while (exercisesContainer.firstChild) {
+        exercisesContainer.removeChild(exercisesContainer.lastChild);
+    }
+    for (let setIndex = 0; setIndex < sets.length; setIndex++) {
+        const set = sets[setIndex];
+        const setDiv = document.createElement("div");
+        exercisesContainer.appendChild(setDiv);
+        setDiv.classList.add('set');
+        const setInfo = document.createElement("div");
+        setDiv.appendChild(setInfo);
+        setInfo.classList.add('set-info');
+        const setTitle = document.createElement("div");
+        setInfo.appendChild(setTitle);
+        setTitle.classList.add('set-title')
+        setTitle.innerText = set.title;
+        const setTimeLabel = document.createElement("div");
+        setInfo.appendChild(setTimeLabel);
+        setTimeLabel.innerText = 'Work: ' + set.work + ', rest: ' + set.rest;
+        
+        for(let exerciseIndex = 0; exerciseIndex < set.exercises.length; exerciseIndex++) {
+            const exerciseDiv = document.createElement("div");
+            setDiv.appendChild(exerciseDiv);
+            exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
+            exerciseDiv.classList.add('exercise');
+            const textNode = document.createTextNode(set.exercises[exerciseIndex]);
+            exerciseDiv.appendChild(textNode);
+        }
+    }
 }
 
 function reload() {
     let exercisesString = document.getElementById("exercises_def").value;
     exercisesString = exercisesString.trim();
     let lines = exercisesString.split("\n");
-    let exercisesContainer = id("exercises");
-    // Clear all exercies
-    while (exercisesContainer.firstChild) {
-        exercisesContainer.removeChild(exercisesContainer.lastChild);
-    }
     const timeSpecRegEx = /^(\d+)\/(\d+)$/;
     let setIndex = 0;
-    // New lines are set separator. Initialize sawNewLine to true
-    // so we always begin with a newste.
-    let sawNewLine = true;
+    // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
+    // a new set.
     sets = [];
-    sets.push({numExercises: 0});
+    sets.push({numExercises: 0, exercises: []});
     for(let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        if(sawNewLine) {
+        if(sets[setIndex].exercises.length == 0) {
             if(line == "") {
-                // Skip consecutive new lines.
+                // It's not a new set because we don't have any exercises in the current set yet.
+                // Skip this new line.
                 continue;
             }
         }
-        if(sawNewLine) {
-            sawNewLine = false;
+        // If starts with '#' and we don't have any exercises yet and the title hasn't been 
+        // set yet.
+        if(line.startsWith('#') && sets[setIndex].title === undefined && 
+            sets[setIndex].exercises.length == 0) {
+            sets[setIndex].title = line.substring(1);
+            continue;
+        }
+
+        // If we don't have any exercises yet and the work/reset time hasn't been set yet.
+        if(sets[setIndex].exercises.length == 0 && sets[setIndex].work === undefined) {
+            // Check for time spec
             // Initialize work/rest time for new set.
             const match = line.match(timeSpecRegEx);
             if(match) {
                 sets[setIndex].work = match[1];
                 sets[setIndex].rest = match[2];
-                const timeLabel = document.createElement("div");
-                timeLabel.innerText = 'Work: ' + match[1] + ', rest: ' + match[2];
-                timeLabel.classList.add('time-label');
-                exercisesContainer.appendChild(timeLabel);
                 continue;
-            } else {
-                // Use whatever the previous work/rest times were
-                sets[setIndex].work = work;
-                sets[setIndex].rest = rest;
             }
         }
 
         if(line.trim() == "") {
-            const setSeparator = document.createElement("div");
-            setSeparator.classList.add('separator');
-            exercisesContainer.appendChild(setSeparator);
-            sawNewLine = true;
-            sets.push({numExercises: 0});
+            // const setSeparator = document.createElement("div");
+            // setSeparator.classList.add('separator');
+            // exercisesContainer.appendChild(setSeparator);
+            sets.push({numExercises: 0, exercises: []});
             setIndex++;
             continue;
         }
 
-        const exerciseDiv = document.createElement("div");
+        // If we're here, the line is an exercise definition
+        // If no work/rest time is set now, set it to the previous work/rest time
+        if(sets[setIndex].work === undefined) {
+            sets[setIndex].work = work;
+        }
+        if(sets[setIndex].rest === undefined) {
+            sets[setIndex].rest = rest;
+        }
+        // If no title is set, use the default title
+        if(sets[setIndex].title === undefined) {
+            sets[setIndex].title = `Set ${setIndex + 1}`;
+        }
+
         sets[sets.length - 1].numExercises++;
-        exerciseDiv.id = 's' + setIndex + 'e' + (sets[setIndex].numExercises - 1);
-        exerciseDiv.classList.add('exercise');
-        const textNode = document.createTextNode(line);
-        exerciseDiv.appendChild(textNode);
-        exercisesContainer.appendChild(exerciseDiv);
+        sets[sets.length - 1].exercises.push(line);
     }
-    numberOfExercises = lines.length;
+    // TODO: Make sure currentSetIndex is within bounds.:w
     work = sets[currentSetIndex].work;
     rest = sets[currentSetIndex].rest;
     remaining = work;
 
-    
+    updateExercisesUi();
     updateUi();
 }
 
