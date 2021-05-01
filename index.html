@@ -7,6 +7,10 @@ html {
   scroll-behavior: smooth;
 }
 
+body {
+    margin: 0 8px 0 8px;
+}
+
 div.exercise {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 30px;
@@ -23,10 +27,6 @@ div.exercise.current {
 
 div.separator {
   height: 100;
-}
-
-#exercises {
-  margin-top: 30px;
 }
 
 #action_label {
@@ -71,6 +71,7 @@ div.set-title {
   border-bottom: 1px;
   border-color: black;
   box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;
+  z-index: 99;
 }
 
 #timer-container-inner {
@@ -143,6 +144,29 @@ Work: <span id='current_work'></span>
 Rest: <span id='current_rest'></span>
 </div>
 
+<div id='timer-container'>
+    <div id='timer-container-inner'>
+        <div id='action_label'>
+            <div id='work_label'>
+                WORK
+            </div>
+            <div id='rest_label'>
+                REST
+            </div>
+            <div id='ready_label'>
+                READY
+            </div>
+            <div id='paused_label'>
+                PAUSED
+            </div>
+        </div>
+        <div id='timer'>
+            <span id='mins'></span>:<span id='secs'></span>
+        </div>
+        <div id='start_container'>
+            <button onclick="start()" id='start_button'>start</button>
+        </div>
+    </div>
 </div>
 <div class='container'>
     <div class='exercise_area'>
@@ -168,30 +192,6 @@ Ex 1
 Ex 2
                 </textarea>
             </div>
-        </div>
-    </div>
-</div>
-<div id='timer-container'>
-    <div id='timer-container-inner'>
-        <div id='action_label'>
-            <div id='work_label'>
-                WORK
-            </div>
-            <div id='rest_label'>
-                REST
-            </div>
-            <div id='ready_label'>
-                READY
-            </div>
-            <div id='paused_label'>
-                PAUSED
-            </div>
-        </div>
-        <div id='timer'>
-            <span id='mins'></span>:<span id='secs'></span>
-        </div>
-        <div id='start_container'>
-            <button onclick="start()" id='start_button'>start</button>
         </div>
     </div>
 </div>
@@ -386,7 +386,9 @@ function updateUi() {
     }
 
     const timerHeight = id('timer-container').offsetHeight;
-    document.querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
+    document
+        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
+    id('placeholder-for-scroll-top').style.height = timerHeight;
 }
 
 function updateExercisesUi() {
