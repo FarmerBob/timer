@@ -139,9 +139,9 @@ div.exercises {
 
 #workout-info {
     display: flex;
-    display: none;
+    /*display: none;*/
     justify-content: space-between;
-  /*box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;*/
+    margin-bottom: 8px;
 }
 </style>
 </head>
@@ -416,8 +416,8 @@ function updateUi() {
     const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
     const timerHeight = id('timer-container').offsetHeight;
     document
-        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
-    id('placeholder-for-scroll-top').style.height = timerHeight;
+        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight - 1);
+    id('placeholder-for-scroll-top').style.height = timerHeight - 1;
     if (previouslySelected != currentExerciseElement) {
         if (previouslySelected != null) {
             previouslySelected.classList.remove('current');
