@@ -136,6 +136,13 @@ div.exercises {
   font-family: Arial, Helvetica, sans-serif;
   text-transform: uppercase;
 }
+
+#workout-info {
+    display: flex;
+    display: none;
+    justify-content: space-between;
+  /*box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;*/
+}
 </style>
 </head>
 
@@ -177,6 +184,10 @@ Rest: <span id='current_rest'></span>
         </div>
         <div id='start_container'>
             <button onclick="start()" id='start_button'>start</button>
+        </div>
+        <div id='workout-info'>
+            <div>Time remaining: 34m 5s</div>
+            <button onclick="define()" id='edit'>Edit</button>
         </div>
     </div>
 </div>
@@ -226,8 +237,6 @@ Do
         </div>
     </div>
 </div>
-
-
 
 
 <script>
