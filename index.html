@@ -8,7 +8,7 @@ html {
 }
 
 body {
-    margin: 0 8px 0 8px;
+    margin: 0;
 }
 
 div.exercise {
@@ -47,6 +47,7 @@ div.separator {
 #placeholder-for-scroll-bottom { height: 100%; }
 
 div.set-info {
+  /*opacity: .5;*/
   background-color: white;
   font-family: Arial, Helvetica, sans-serif;
   font-size: medium;
@@ -54,14 +55,21 @@ div.set-info {
   top: 0;
   padding-top: 20px;
   padding-bottom: 20px;
-  border-bottom: 1px solid black;
+  padding-left: 8px;
+  /*border-bottom: 1px solid black;*/
 }
 
 div.set-title {
     font-size: 40px;
 }
 
+div.exercises {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
 #timer-container {
+  /*opacity: .5;*/
   font-family: Arial, Helvetica, sans-serif;
   left: 0;
   width: 100%;
@@ -70,7 +78,7 @@ div.set-title {
   background-color: white;
   border-bottom: 1px;
   border-color: black;
-  box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;
+  /*box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;*/
   z-index: 99;
 }
 
@@ -172,7 +180,7 @@ Rest: <span id='current_rest'></span>
     <div class='exercise_area'>
         <div id='play_area'>
             <div id='placeholder-for-scroll-top'></div>
-            <div id='exercises' onclick="define()"></div>
+            <div id='sets' onclick="define()"></div>
             <div id='placeholder-for-scroll-bottom'></div>
         </div>
     
@@ -391,35 +399,36 @@ function updateUi() {
     const exercisesContainer = id("exercises");
     const previouslySelected = document.querySelector('div.exercise.current');
     const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
+    const timerHeight = id('timer-container').offsetHeight;
+    document
+        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
+    id('placeholder-for-scroll-top').style.height = timerHeight;
     if (previouslySelected != currentExerciseElement) {
         if (previouslySelected != null) {
             previouslySelected.classList.remove('current');
         }
         if (currentExerciseElement != null) {
             currentExerciseElement.classList.add("current");
-            // Scroll to the center of the current exercise.
+            const setInfo = document.querySelector('.set-info');
             const offsetTop = currentExerciseElement.getBoundingClientRect().top + document.body.scrollTop;
-            const windowHeight = window.innerHeight;
-            window.scrollTo(0, offsetTop - windowHeight / 2 + currentExerciseElement.offsetHeight / 2);
+            // Scroll the current exercise element to right below the timer and the set-info header.
+            const scrollTo = Math.max(0, Math.floor(offsetTop - timerHeight - setInfo.offsetHeight));
+            window.scrollTo(0, scrollTo);
         }
     }
 
-    const timerHeight = id('timer-container').offsetHeight;
-    document
-        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight);
-    id('placeholder-for-scroll-top').style.height = timerHeight;
 }
 
 function updateExercisesUi() {
-    let exercisesContainer = id("exercises");
+    let setsContainer = id("sets");
     // Clear all exercies
-    while (exercisesContainer.firstChild) {
-        exercisesContainer.removeChild(exercisesContainer.lastChild);
+    while (setsContainer.firstChild) {
+        setsContainer.removeChild(setsContainer.lastChild);
     }
     for (let setIndex = 0; setIndex < sets.length; setIndex++) {
         const set = sets[setIndex];
         const setDiv = document.createElement("div");
-        exercisesContainer.appendChild(setDiv);
+        setsContainer.appendChild(setDiv);
         setDiv.classList.add('set');
         const setInfo = document.createElement("div");
         setDiv.appendChild(setInfo);
@@ -431,10 +440,13 @@ function updateExercisesUi() {
         const setTimeLabel = document.createElement("div");
         setInfo.appendChild(setTimeLabel);
         setTimeLabel.innerText = 'Work: ' + set.work + ', rest: ' + set.rest;
+        const exercisesDiv = document.createElement("div");
+        setDiv.appendChild(exercisesDiv);
+        exercisesDiv.classList.add('exercises');
         
         for(let exerciseIndex = 0; exerciseIndex < set.exercises.length; exerciseIndex++) {
             const exerciseDiv = document.createElement("div");
-            setDiv.appendChild(exerciseDiv);
+            exercisesDiv.appendChild(exerciseDiv);
             exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
             exerciseDiv.classList.add('exercise');
             const textNode = document.createTextNode(set.exercises[exerciseIndex]);
@@ -483,9 +495,6 @@ function reload() {
         }
 
         if(line.trim() == "") {
-            // const setSeparator = document.createElement("div");
-            // setSeparator.classList.add('separator');
-            // exercisesContainer.appendChild(setSeparator);
             sets.push({numExercises: 0, exercises: []});
             setIndex++;
             continue;
