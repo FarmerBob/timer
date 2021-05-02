@@ -311,38 +311,41 @@ function start() {
 }
 
 function updateSecond() {
-    if(remaining > 0) {
-        remaining--;
-        if(remaining == 0) {
-            longBeep();
-            if(isWork) {
-                if(currentSetExercise < sets[currentSetIndex].exercises.length - 1) {
-                    // This is not the last exercise. Move on to the rest period.
-                    isWork = false;
-                    remaining = currentSet().rest;
-                } else {
-                    // We just finished work for the last exercise in the set.
-                    // Move on to the next set, or back to the first set.
-                    currentSetExercise = 0;
-                    if(currentSetIndex == sets.length - 1) {
-                        currentSetIndex = 0;
-                    } else {
-                        currentSetIndex++;
-                    }
-                    // Stop the timer.
-                    clearInterval(intervalId);
-                    intervalId = null;
-                    state = NOT_STARTED;
-                    remaining = currentExercise().work;
+    remaining--;
+    if(remaining <= 0) {
+        if(isWork) {
+            if(currentSetExercise < sets[currentSetIndex].exercises.length - 1) {
+                // This is not the last exercise. Move on to the rest period.
+                if (currentSet().rest > 0) {
+                    // Don't beep for sets that have rest of 0 seconds.
+                    longBeep();
                 }
+                isWork = false;
+                remaining = currentSet().rest;
             } else {
-                // Just finished rest period. Move on to the next exercise in the set.
-                isWork = true;
-                currentSetExercise++;
+                longBeep();
+                // We just finished work for the last exercise in the set.
+                // Move on to the next set, or back to the first set.
+                currentSetExercise = 0;
+                if(currentSetIndex == sets.length - 1) {
+                    currentSetIndex = 0;
+                } else {
+                    currentSetIndex++;
+                }
+                // Stop the timer.
+                clearInterval(intervalId);
+                intervalId = null;
+                state = NOT_STARTED;
                 remaining = currentExercise().work;
             }
+        } else {
+            longBeep();
+            // Just finished rest period. Move on to the next exercise in the set.
+            isWork = true;
+            currentSetExercise++;
+            remaining = currentExercise().work;
         }
-    } 
+    }
     updateUi();
 }
 
