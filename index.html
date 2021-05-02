@@ -398,6 +398,7 @@ function updateUi() {
     const timerContainer = id('timer-container');
     const actionLabel = id('action_label');
     timerContainer.style.top = 0;
+    id('work_label').innerText = sets[currentSetIndex].exercises[currentSetExercise].name;
 
 
     // Give a selected style to the current exercise.
