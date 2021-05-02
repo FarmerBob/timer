@@ -308,16 +308,17 @@ function updateSecond() {
                     clearInterval(intervalId);
                     intervalId = null;
                     state = NOT_STARTED;
-                    work = sets[currentSetIndex].work;
+                    work = sets[currentSetIndex].exercises[currentSetExercise].work;
                     rest = sets[currentSetIndex].rest;
                     remaining = work;
                 }
             } else {
                 // Just finished rest period. Move on to the next exercise in the set.
                 isWork = true;
-                remaining = work;
                 currentExercise++;
                 currentSetExercise++;
+                work = sets[currentSetIndex].exercises[currentSetExercise].work;
+                remaining = work;
             }
         }
     } 
@@ -457,7 +458,7 @@ function updateExercisesUi() {
             exercisesDiv.appendChild(exerciseDiv);
             exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
             exerciseDiv.classList.add('exercise');
-            const textNode = document.createTextNode(set.exercises[exerciseIndex]);
+            const textNode = document.createTextNode(set.exercises[exerciseIndex].name);
             exerciseDiv.appendChild(textNode);
         }
     }
@@ -521,10 +522,17 @@ function reload() {
             sets[setIndex].title = `Set ${setIndex + 1}`;
         }
 
-        sets[sets.length - 1].exercises.push(line);
+        const overrideTimeRegex = /^\((\d+)\)\s*(.+)$/;
+        const match = line.match(overrideTimeRegex);
+        const time = match ? match[1] : sets[sets.length - 1].work;
+        const name = match ? match[2] : line;
+
+        sets[sets.length - 1].exercises.push({ work: time, name: name });
     }
-    // TODO: Make sure currentSetIndex is within bounds.:w
-    work = sets[currentSetIndex].work;
+    // TODO: Make sure currentSetIndex is within bounds.
+    console.log(sets[currentSetIndex].exercises[currentSetExercise]);
+    console.log(sets[currentSetIndex].exercises[currentSetExercise].work);
+    work = sets[currentSetIndex].exercises[currentSetExercise].work;
     rest = sets[currentSetIndex].rest;
     remaining = work;
 
