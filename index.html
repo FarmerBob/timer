@@ -291,7 +291,7 @@ function updateSecond() {
         if(remaining == 0) {
             longBeep();
             if(isWork) {
-                if(currentSetExercise < sets[currentSetIndex].numExercises - 1) {
+                if(currentSetExercise < sets[currentSetIndex].exercises.length - 1) {
                     // This is not the last exercise. Move on to the rest period.
                     isWork = false;
                     remaining = rest;
@@ -387,7 +387,7 @@ function updateUi() {
     id("current_rest").innerText = rest;
     id('num_sets').innerText = sets.length;
     id('num_exercises').innerText = 
-        sets.reduce((a, c) => a + c.numExercises, 0);
+        sets.reduce((a, c) => a + c.exercises.length, 0);
     id('current_set').innerText = currentSetIndex;
     id('current_exercise').innerText = currentSetExercise;
     const timerContainer = id('timer-container');
@@ -464,7 +464,7 @@ function reload() {
     // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
     // a new set.
     sets = [];
-    sets.push({numExercises: 0, exercises: []});
+    sets.push({ exercises: []});
     for(let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if(sets[setIndex].exercises.length == 0) {
@@ -495,7 +495,7 @@ function reload() {
         }
 
         if(line.trim() == "") {
-            sets.push({numExercises: 0, exercises: []});
+            sets.push({ exercises: []});
             setIndex++;
             continue;
         }
@@ -513,7 +513,6 @@ function reload() {
             sets[setIndex].title = `Set ${setIndex + 1}`;
         }
 
-        sets[sets.length - 1].numExercises++;
         sets[sets.length - 1].exercises.push(line);
     }
     // TODO: Make sure currentSetIndex is within bounds.:w
