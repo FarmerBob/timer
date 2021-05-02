@@ -409,14 +409,24 @@ function updateUi() {
         }
         if (currentExerciseElement != null) {
             currentExerciseElement.classList.add("current");
-            const setInfo = document.querySelector('.set-info');
-            const offsetTop = currentExerciseElement.getBoundingClientRect().top + document.body.scrollTop;
-            // Scroll the current exercise element to right below the timer and the set-info header.
-            const scrollTo = Math.max(0, Math.floor(offsetTop - timerHeight - setInfo.offsetHeight));
-            window.scrollTo(0, scrollTo);
+            // Must scroll after the font size is increased, otherwise it will be resized after the
+            // scrolling and be cut off.
+            // Alternative to consider for making font increase and scrolling simultaneous: scroll
+            // to the bottom of the previous exercise instead.
+            currentExerciseElement.ontransitionend = () => {
+                scrollToElement(currentExerciseElement);
+            }
         }
     }
+}
 
+function scrollToElement(exerciseElement) {
+    const timerHeight = id('timer-container').offsetHeight;
+    const setInfo = document.querySelector('.set-info');
+    const offsetTop = exerciseElement.getBoundingClientRect().top + document.body.scrollTop;
+    // Scroll the current exercise element to right below the timer and the set-info header.
+    const scrollTo = Math.max(0, Math.floor(offsetTop - timerHeight - setInfo.offsetHeight));
+    window.scrollTo(0, scrollTo);
 }
 
 function updateExercisesUi() {
