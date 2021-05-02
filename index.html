@@ -479,7 +479,7 @@ function reload() {
     let exercisesString = document.getElementById("exercises_def").value;
     exercisesString = exercisesString.trim();
     let lines = exercisesString.split("\n");
-    const timeSpecRegEx = /^(\d+)\/(\d+)$/;
+    const timeSpecRegEx = /^(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)$/;
     let setIndex = 0;
     // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
     // a new set.
@@ -509,7 +509,7 @@ function reload() {
             const match = line.match(timeSpecRegEx);
             if(match) {
                 sets[setIndex].work = match[1];
-                sets[setIndex].rest = match[2];
+                sets[setIndex].rest = match[3];
                 continue;
             }
         }
