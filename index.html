@@ -186,7 +186,9 @@ Rest: <span id='current_rest'></span>
             <button onclick="start()" id='start_button'>start</button>
         </div>
         <div id='workout-info'>
-            <div>Time remaining: 34m 5s</div>
+            <div>Time remaining: 
+                <span id='workoutRemainingMin'>34</span>m
+                <span id='workoutRemainingSec'>5</span>s</div>
             <button onclick="define()" id='edit'>Edit</button>
         </div>
     </div>
@@ -356,6 +358,42 @@ function updateRemainingTime() {
    const secs = remaining % 60;
    id("mins").innerText = mins.toString().padStart(2, "0");
    id("secs").innerText = secs.toString().padStart(2, "0");
+
+   const remainingInCurrentSet = getRemainingInCurrentSet();
+   const remainingInOtherSets = getRemainingInFollowingSets();
+   console.log("remainingInOtherSets: " + remainingInOtherSets);
+   const totalRemaining = remainingInCurrentSet + remainingInOtherSets;
+   id("workoutRemainingMin").innerText = Math.floor(totalRemaining / 60);
+   id("workoutRemainingSec").innerText = totalRemaining % 60;
+}
+
+function getRemainingInCurrentSet() {
+    set = sets[currentSetIndex];
+    let remainingInSet = 0;
+    for (let i = currentSetExercise + 1; i < set.exercises.length; i++) {
+        remainingInSet += set.exercises[i].work;
+    }
+    // Add rest periods.
+    if (isWork) {
+        // Number of remaining exercises multiplied by rest period
+        remainingInSet += (set.exercises.length - currentSetExercise - 1) * set.rest;
+    } else {
+        // We are currently in a rest period that is being counted down. Thus don't count one
+        // of the rest periods - it will be in the "remaining" variable.
+        remainingInSet += (set.exercises.length - currentSetExercise - 2) * set.rest;
+    }
+    return remainingInSet + remaining;
+}
+
+function getRemainingInFollowingSets() {
+    let remainingInSets = 0;
+    for (let i = currentSetIndex + 1; i < sets.length; i++) {
+        const set = sets[i];
+        remainingInSets += set.exercises.map(e => e.work).reduce((a, b) => a + b, 0);
+        remainingInSets += (set.exercises.length - 1) * set.rest;
+    }
+    console.log("remainingInSets: " + remainingInSets);
+    return remainingInSets;
 }
 
 function updateUi() {
@@ -518,8 +556,8 @@ function reload() {
             // Initialize work/rest time for new set.
             const match = line.match(timeSpecRegEx);
             if(match) {
-                sets[setIndex].work = match[1];
-                sets[setIndex].rest = match[3];
+                sets[setIndex].work = parseInt(match[1]);
+                sets[setIndex].rest = parseInt(match[3]);
                 continue;
             }
         }
@@ -546,7 +584,7 @@ function reload() {
         const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
         const match = line.match(overrideTimeRegex);
         const name = match ? match[1] : line;
-        const time = match ? match[2] : sets[sets.length - 1].work;
+        const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
 
         sets[sets.length - 1].exercises.push({ work: time, name: name });
     }
