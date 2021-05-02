@@ -411,8 +411,6 @@ function updateUi() {
             currentExerciseElement.classList.add("current");
             // Must scroll after the font size is increased, otherwise it will be resized after the
             // scrolling and be cut off.
-            // Alternative to consider for making font increase and scrolling simultaneous: scroll
-            // to the bottom of the previous exercise instead.
             currentExerciseElement.ontransitionend = () => {
                 scrollToElement(currentExerciseElement);
             }
