@@ -529,9 +529,10 @@ function reload() {
 
         sets[sets.length - 1].exercises.push({ work: time, name: name });
     }
-    // TODO: Make sure currentSetIndex is within bounds.
-    console.log(sets[currentSetIndex].exercises[currentSetExercise]);
-    console.log(sets[currentSetIndex].exercises[currentSetExercise].work);
+    // Make sure currentSetIndex is within bounds.
+    currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
+    currentSetExercise = Math.min(currentSetExercise, sets[currentSetIndex].exercises.length - 1);
+
     work = sets[currentSetIndex].exercises[currentSetExercise].work;
     rest = sets[currentSetIndex].rest;
     remaining = work;
