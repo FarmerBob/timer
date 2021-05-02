@@ -18,6 +18,10 @@ div.exercise {
   transition-duration: 0.3s;
 }
 
+.time-override {
+    font-style: italic;
+}
+
 div.exercise.current {
   font-weight: bold;
   font-size: 40px;
@@ -454,12 +458,19 @@ function updateExercisesUi() {
         exercisesDiv.classList.add('exercises');
         
         for(let exerciseIndex = 0; exerciseIndex < set.exercises.length; exerciseIndex++) {
+            const exercise = set.exercises[exerciseIndex];
             const exerciseDiv = document.createElement("div");
             exercisesDiv.appendChild(exerciseDiv);
             exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
             exerciseDiv.classList.add('exercise');
-            const textNode = document.createTextNode(set.exercises[exerciseIndex].name);
+            const textNode = document.createTextNode(exercise.name);
             exerciseDiv.appendChild(textNode);
+            if (exercise.work != set.work) {
+                const timeNode = document.createElement("span");
+                exerciseDiv.appendChild(timeNode);
+                timeNode.classList.add('time-override');
+                timeNode.innerText = " (" + exercise.work + " seconds) ";
+            }
         }
     }
 }
@@ -522,10 +533,10 @@ function reload() {
             sets[setIndex].title = `Set ${setIndex + 1}`;
         }
 
-        const overrideTimeRegex = /^\((\d+)\)\s*(.+)$/;
+        const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
         const match = line.match(overrideTimeRegex);
-        const time = match ? match[1] : sets[sets.length - 1].work;
-        const name = match ? match[2] : line;
+        const name = match ? match[1] : line;
+        const time = match ? match[2] : sets[sets.length - 1].work;
 
         sets[sets.length - 1].exercises.push({ work: time, name: name });
     }
