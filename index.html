@@ -25,8 +25,6 @@ div.exercise {
 div.exercise.current {
   font-weight: bold;
   font-size: 40px;
-  transition-property: font-size;
-  transition-duration: 0.3s;
 }
 
 div.separator {
@@ -197,7 +195,7 @@ Rest: <span id='current_rest'></span>
     <div class='exercise_area'>
         <div id='play_area'>
             <div id='placeholder-for-scroll-top'></div>
-            <div id='sets' onclick="define()"></div>
+            <div id='sets'></div>
             <div id='placeholder-for-scroll-bottom'></div>
         </div>
     
@@ -361,7 +359,6 @@ function updateRemainingTime() {
 
    const remainingInCurrentSet = getRemainingInCurrentSet();
    const remainingInOtherSets = getRemainingInFollowingSets();
-   console.log("remainingInOtherSets: " + remainingInOtherSets);
    const totalRemaining = remainingInCurrentSet + remainingInOtherSets;
    id("workoutRemainingMin").innerText = Math.floor(totalRemaining / 60);
    id("workoutRemainingSec").innerText = totalRemaining % 60;
@@ -392,7 +389,6 @@ function getRemainingInFollowingSets() {
         remainingInSets += set.exercises.map(e => e.work).reduce((a, b) => a + b, 0);
         remainingInSets += (set.exercises.length - 1) * set.rest;
     }
-    console.log("remainingInSets: " + remainingInSets);
     return remainingInSets;
 }
 
@@ -459,6 +455,7 @@ function updateUi() {
     if (previouslySelected != currentExerciseElement) {
         if (previouslySelected != null) {
             previouslySelected.classList.remove('current');
+            previouslySelected.ontransitionend = () => {}
         }
         if (currentExerciseElement != null) {
             currentExerciseElement.classList.add("current");
@@ -511,6 +508,11 @@ function updateExercisesUi() {
             exercisesDiv.appendChild(exerciseDiv);
             exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
             exerciseDiv.classList.add('exercise');
+            exerciseDiv.onclick = (e) => {
+                currentSetIndex = setIndex;
+                currentSetExercise = exerciseIndex;
+                updateUi();
+            }
             const textNode = document.createTextNode(exercise.name);
             exerciseDiv.appendChild(textNode);
             if (exercise.work != set.work) {
