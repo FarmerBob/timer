@@ -1,0 +1,686 @@
+
+<html>
+
+<head>
+    <title>Timer</title>
+<style>
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+}
+
+div.exercise {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 30px;
+  transition-property: font-size;
+  transition-duration: 0.3s;
+}
+
+.time-override {
+    font-style: italic;
+}
+
+div.exercise.current {
+  font-weight: bold;
+  font-size: 40px;
+}
+
+div.separator {
+  height: 100;
+}
+
+#action_label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 40px;
+  text-align: center;
+}
+
+#work_label {
+  color: green;
+}
+
+#rest_label {
+  color: red;
+}
+
+#placeholder-for-scroll-top { height: 50%; }
+#placeholder-for-scroll-bottom { height: 100%; }
+
+div.set-info {
+  /*opacity: .5;*/
+  background-color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: medium;
+  position: sticky;
+  top: 0;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 8px;
+  /*border-bottom: 1px solid black;*/
+}
+
+div.set-title {
+    font-size: 40px;
+}
+
+div.set-time-info {
+    display: flex;
+    justify-content: space-between;
+}
+
+div.exercises {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+#timer-container {
+  /*opacity: .5;*/
+  font-family: Arial, Helvetica, sans-serif;
+  left: 0;
+  width: 100%;
+  position: fixed;
+  margin-right: 30px;
+  background-color: white;
+  border-bottom: 1px;
+  border-color: black;
+  /*box-shadow: rgb(0 0 0 / 20%) 0px 0px 15px;*/
+  z-index: 99;
+}
+
+#timer-container-inner {
+  margin-right: 8px;
+  margin-left: 8px;
+}
+
+#timer {
+  width: auto;
+  text-align: center;
+  font-family: monospace;
+  font-size: 100px;
+  background-color: #E7E7E7;
+  color: black;
+}
+
+#timer.work {
+  background-color: #4CAF50;
+  color: white;
+}
+
+#timer.rest {
+  background-color: crimson;
+  color: white;
+}
+
+#timer.inactive {
+  background-color: #E7E7E7;
+  color: black;
+}
+
+#start_container {
+  text-align: center;
+  width: auto;
+  margin-bottom: 10px;
+}
+
+#start_button {
+  width: 100%;
+  
+  background-color: #E7E7E7;
+  color: white;
+  color: black;
+  text-decoration: none;
+  border: none;
+  margin-top: 2px;
+  padding: 10px;
+  font-size: 32px;
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+}
+
+#workout-info {
+    display: flex;
+    /*display: none;*/
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- <a href="#" onclick="play()">Play</a>
+<a href="#" onclick="define()">Define</a> -->
+<div style="display: none;">
+    Sets: <span id='num_sets'></span>
+    Exercises: <span id='num_exercises'></span>
+</div>
+<div style="display: none;">
+    Set: <span id='current_set'></span>
+    Exercise: <span id='current_exercise'></span>
+</div>
+<div style="display: none;">
+Work: <span id='current_work'></span>
+Rest: <span id='current_rest'></span>
+</div>
+
+<div id='timer-container'>
+    <div id='timer-container-inner'>
+        <div id='action_label'>
+            <div id='work_label'>
+                WORK
+            </div>
+            <div id='rest_label'>
+                REST
+            </div>
+            <div id='ready_label'>
+                READY
+            </div>
+            <div id='paused_label'>
+                PAUSED
+            </div>
+        </div>
+        <div id='timer'>
+            <span id='mins'></span>:<span id='secs'></span>
+        </div>
+        <div id='start_container'>
+            <button onclick="start()" id='start_button'>start</button>
+        </div>
+        <div id='workout-info'>
+            <div>Workout Time Remaining: 
+                <span id='workoutRemainingMin'>34</span>m
+                <span id='workoutRemainingSec'>5</span>s</div>
+            <button onclick="define()" id='edit'>Edit</button>
+        </div>
+    </div>
+</div>
+<div class='container'>
+    <div class='exercise_area'>
+        <div id='play_area'>
+            <div id='placeholder-for-scroll-top'></div>
+            <div id='sets'></div>
+            <div id='placeholder-for-scroll-bottom'></div>
+        </div>
+    
+        <div style="display:none"  id='define_area'>
+            <span id=>Exercises:</span>
+            <div>
+                <textarea id='exercises_def' rows='30' cols='40'
+                onchange='reload()'
+                onblur='play()'>
+#Core 1
+30/10
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+
+20/5
+# Core 2
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+
+
+Kote
+Kote-Men
+Do
+
+                </textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+const id = function(id) { return document.getElementById(id); };
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const NOT_STARTED = 1;
+const PLAYING = 2;
+const PAUSED = 3;
+const DEFAULT_WORK = 20;
+const DEFAULT_REST = 5;
+let state = NOT_STARTED;
+let intervalId = null;
+
+let isWork = true;
+let currentSetIndex = 0;
+let currentSetExercise = 0;
+let isDefineMode = false;
+let sets = [];
+
+let remaining = 0;
+
+window.onresize = updateUi;
+
+const storedExercises = localStorage.getItem('exercises');
+if (storedExercises != null && storedExercises.trim() != "") {
+    id('exercises_def').value = storedExercises;
+}
+
+reload();
+
+function currentSet() {
+    return sets[currentSetIndex];
+}
+
+function currentExercise() {
+    return sets[currentSetIndex].exercises[currentSetExercise];
+}
+
+function start() {
+    shortBeep();
+    switch(state) {
+        case NOT_STARTED:
+            state = PLAYING;
+            break;
+        case PLAYING:
+            state = PAUSED; 
+            break;
+        case PAUSED:
+            state = PLAYING;
+            break;
+    }
+
+    updateUi();
+    if(intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
+    if (state == PLAYING) {
+        intervalId = setInterval(
+            function() {
+                updateSecond();
+            }, 1000
+        );
+    }
+}
+
+function updateSecond() {
+    remaining--;
+    if(remaining <= 0) {
+        if(isWork) {
+            if(currentSetExercise < sets[currentSetIndex].exercises.length - 1) {
+                // This is not the last exercise. Move on to the rest period.
+                if (currentSet().rest > 0) {
+                    // Don't beep for sets that have rest of 0 seconds.
+                    longBeep();
+                }
+                isWork = false;
+                remaining = currentSet().rest;
+            } else {
+                longBeep();
+                // We just finished work for the last exercise in the set.
+                // Move on to the next set, or back to the first set.
+                currentSetExercise = 0;
+                if(currentSetIndex == sets.length - 1) {
+                    currentSetIndex = 0;
+                } else {
+                    currentSetIndex++;
+                }
+                // Stop the timer.
+                clearInterval(intervalId);
+                intervalId = null;
+                state = NOT_STARTED;
+                remaining = currentExercise().work;
+            }
+        } else {
+            longBeep();
+            // Just finished rest period. Move on to the next exercise in the set.
+            isWork = true;
+            currentSetExercise++;
+            remaining = currentExercise().work;
+        }
+    }
+    updateUi();
+}
+
+function play() {
+    isDefineMode = false;
+    const exercisesString = id("exercises_def").value;
+    localStorage.setItem('exercises', exercisesString);
+    updateUi();
+}
+
+function define() {
+    isDefineMode = true;
+    updateUi();
+    id('exercises_def').focus();
+}
+
+
+function updateRemainingTime() {
+   const mins = Math.floor(remaining / 60);
+   const secs = remaining % 60;
+   id("mins").innerText = mins.toString().padStart(2, "0");
+   id("secs").innerText = secs.toString().padStart(2, "0");
+
+   const remainingInCurrentSet = getRemainingInCurrentSet();
+
+   const remainingInOtherSets = getRemainingInFollowingSets();
+   const totalRemaining = remainingInCurrentSet + remainingInOtherSets;
+   id("workoutRemainingMin").innerText = Math.floor(totalRemaining / 60);
+   id("workoutRemainingSec").innerText = totalRemaining % 60;
+
+   // Remaining time is 0 for any sets that were finished.
+   for (let i = 0; i < currentSetIndex; i++) {
+       updateRemainingTimeInSet(i, 0);
+   }
+   updateRemainingTimeInSet(currentSetIndex, remainingInCurrentSet);
+   for (let i = currentSetIndex + 1; i < sets.length; i++) {
+       updateRemainingTimeInSet(i, getTotalTimeInSet(i));
+   }
+}
+
+function updateRemainingTimeInSet(setIndex, timeRemaining) {
+   const mins = Math.floor(timeRemaining / 60);
+   const secs = timeRemaining % 60;
+
+   document
+       .querySelector("#set" + setIndex + " .set-remaining-time")
+       .innerText = mins + "m " + secs + "s";
+
+}
+
+
+function getRemainingInCurrentSet() {
+    set = sets[currentSetIndex];
+    let remainingInSet = 0;
+    for (let i = currentSetExercise + 1; i < set.exercises.length; i++) {
+        remainingInSet += set.exercises[i].work;
+    }
+    // Add rest periods.
+    if (isWork) {
+        // Number of remaining exercises multiplied by rest period
+        remainingInSet += (set.exercises.length - currentSetExercise - 1) * set.rest;
+    } else {
+        // We are currently in a rest period that is being counted down. Thus don't count one
+        // of the rest periods - it will be in the "remaining" variable.
+        remainingInSet += (set.exercises.length - currentSetExercise - 2) * set.rest;
+    }
+    return remainingInSet + remaining;
+}
+
+function getRemainingInFollowingSets() {
+    let remainingInSets = 0;
+    for (let i = currentSetIndex + 1; i < sets.length; i++) {
+        remainingInSets += getTotalTimeInSet(i);
+    }
+    return remainingInSets;
+}
+
+function getTotalTimeInSet(setIndex) {
+    const set = sets[setIndex];
+    const workTime = set.exercises.map(e => e.work).reduce((a, b) => a + b, 0);
+    const restTime = (set.exercises.length - 1) * set.rest;
+    return workTime + restTime;
+}
+
+function updateUi() {
+    const timer = id('timer');
+    id("ready_label").style.display = "none";
+    id("work_label").style.display = "none";
+    id("rest_label").style.display = "none";
+    id("paused_label").style.display = "none";
+    switch(state) {
+        case NOT_STARTED:
+            id('start_button').innerText = 'start';
+            timer.classList.remove('rest', 'work')
+            timer.classList.add('inactive');
+            id("ready_label").style.display = "block";
+            break;
+        case PLAYING:
+            id("ready_label").style.display = "none";
+            if(id('start_button').innerText != 'pause') {
+                id('start_button').innerText = 'pause';
+            }
+            if(isWork) {
+                timer.classList.remove('rest', 'inactive');
+                timer.classList.add('work');
+                id("work_label").style.display = "block";
+            } else {
+                timer.classList.remove('work', 'inactive');
+                timer.classList.add('rest');
+                id("rest_label").style.display = "block";
+            }
+            break;
+        case PAUSED:
+            id('start_button').innerText = 'resume';
+            timer.classList.remove('rest', 'work')
+            timer.classList.add('inactive');
+            id("paused_label").style.display = "block";
+            break;
+    }
+    updateRemainingTime();
+    id('play_area').style.display = isDefineMode ? "none" : "block";
+    id('timer-container').style.display = isDefineMode ? "none" : "block";
+    id('define_area').style.display = isDefineMode ? "block" : "none";
+    id("current_work").innerText = currentExercise().work;
+    id("current_rest").innerText = currentExercise().rest;
+    id('num_sets').innerText = sets.length;
+    id('num_exercises').innerText = 
+        sets.reduce((a, c) => a + c.exercises.length, 0);
+    id('current_set').innerText = currentSetIndex;
+    id('current_exercise').innerText = currentSetExercise;
+    const timerContainer = id('timer-container');
+    const actionLabel = id('action_label');
+    timerContainer.style.top = 0;
+    id('work_label').innerText = sets[currentSetIndex].exercises[currentSetExercise].name;
+
+    // Give a selected style to the current exercise.
+    const exercisesContainer = id("exercises");
+    const previouslySelected = document.querySelector('div.exercise.current');
+    const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
+    const timerHeight = id('timer-container').offsetHeight;
+    document
+        .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight - 1);
+    id('placeholder-for-scroll-top').style.height = timerHeight - 1;
+    if (previouslySelected != currentExerciseElement) {
+        if (previouslySelected != null) {
+            previouslySelected.classList.remove('current');
+            previouslySelected.ontransitionend = () => {}
+        }
+        if (currentExerciseElement != null) {
+            currentExerciseElement.classList.add("current");
+            // Must scroll after the font size is increased, otherwise it will be resized after the
+            // scrolling and be cut off.
+            currentExerciseElement.ontransitionend = () => {
+                scrollToElement(currentExerciseElement);
+            }
+        }
+    }
+}
+
+function scrollToElement(exerciseElement) {
+    const timerHeight = id('timer-container').offsetHeight;
+    const setInfo = document.querySelector('.set-info');
+    const offsetTop = exerciseElement.getBoundingClientRect().top + document.body.scrollTop;
+    // Scroll the current exercise element to right below the timer and the set-info header.
+    const scrollTo = Math.max(0, Math.floor(offsetTop - timerHeight - setInfo.offsetHeight));
+    window.scrollTo(0, scrollTo);
+}
+
+function updateExercisesUi() {
+    let setsContainer = id("sets");
+    // Clear all exercies
+    while (setsContainer.firstChild) {
+        setsContainer.removeChild(setsContainer.lastChild);
+    }
+    for (let setIndex = 0; setIndex < sets.length; setIndex++) {
+        const set = sets[setIndex];
+        const setDiv = document.createElement("div");
+        setsContainer.appendChild(setDiv);
+        setDiv.classList.add('set');
+        setDiv.id = "set" + setIndex;
+        const setInfo = document.createElement("div");
+        setDiv.appendChild(setInfo);
+        setInfo.classList.add('set-info');
+        const setTitle = document.createElement("div");
+        setInfo.appendChild(setTitle);
+        setTitle.classList.add('set-title')
+        setTitle.innerText = set.title;
+        const setTimeInfo = document.createElement("div");
+        setInfo.appendChild(setTimeInfo);
+        setTimeInfo.classList.add("set-time-info");
+        const setIntervalTimeLabel = document.createElement("div");
+        setTimeInfo.appendChild(setIntervalTimeLabel);
+        setIntervalTimeLabel.classList.add("set-interval-time");
+        setIntervalTimeLabel.innerText = 'Work: ' + set.work + ', rest: ' + set.rest;
+
+        const setRemainingTimeLabel = document.createElement("div");
+        setTimeInfo.appendChild(setRemainingTimeLabel);
+        setRemainingTimeLabel.classList.add("set-remaining-time");
+
+        const exercisesDiv = document.createElement("div");
+        setDiv.appendChild(exercisesDiv);
+        exercisesDiv.classList.add('exercises');
+        
+        for(let exerciseIndex = 0; exerciseIndex < set.exercises.length; exerciseIndex++) {
+            const exercise = set.exercises[exerciseIndex];
+            const exerciseDiv = document.createElement("div");
+            exercisesDiv.appendChild(exerciseDiv);
+            exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
+            exerciseDiv.classList.add('exercise');
+            exerciseDiv.onclick = (e) => {
+                currentSetIndex = setIndex;
+                currentSetExercise = exerciseIndex;
+                remaining = currentExercise().work;
+                isWork = true;
+                updateUi();
+            }
+            const textNode = document.createTextNode(exercise.name);
+            exerciseDiv.appendChild(textNode);
+            if (exercise.work != set.work) {
+                const timeNode = document.createElement("span");
+                exerciseDiv.appendChild(timeNode);
+                timeNode.classList.add('time-override');
+                timeNode.innerText = " (" + exercise.work + " seconds) ";
+            }
+        }
+    }
+}
+
+function reload() {
+    let exercisesString = document.getElementById("exercises_def").value;
+    exercisesString = exercisesString.trim();
+    let lines = exercisesString.split("\n");
+    const timeSpecRegEx = /^(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)?$/;
+    let setIndex = 0;
+    // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
+    // a new set.
+    sets = [];
+    sets.push({ exercises: []});
+    for(let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if(sets[setIndex].exercises.length == 0) {
+            if(line == "") {
+                // It's not a new set because we don't have any exercises in the current set yet.
+                // Skip this new line.
+                continue;
+            }
+        }
+        // If starts with '#' and we don't have any exercises yet and the title hasn't been 
+        // set yet.
+        if(line.startsWith('#') && sets[setIndex].title === undefined && 
+            sets[setIndex].exercises.length == 0) {
+            sets[setIndex].title = line.substring(1);
+            continue;
+        }
+
+        // If we don't have any exercises yet and the work/reset time hasn't been set yet.
+        if(sets[setIndex].exercises.length == 0 && sets[setIndex].work === undefined) {
+            // Check for time spec
+            // Initialize work/rest time for new set.
+            const match = line.match(timeSpecRegEx);
+            if(match) {
+                sets[setIndex].work = parseInt(match[1]);
+                sets[setIndex].rest = parseInt(match[3]);
+                continue;
+            }
+        }
+
+        if(line.trim() == "") {
+            sets.push({ exercises: []});
+            setIndex++;
+            continue;
+        }
+
+        // If we're here, the line is an exercise definition
+        // If no work/rest time is set now, set it to the previous work/rest time
+        if(sets[setIndex].work === undefined) {
+            sets[setIndex].work = setIndex == 0 ? DEFAULT_WORK : sets[setIndex - 1].work;
+        }
+        if(sets[setIndex].rest === undefined) {
+            sets[setIndex].rest = setIndex == 0 ? DEFAULT_REST : sets[setIndex - 1].rest;
+        }
+        // If no title is set, use the default title
+        if(sets[setIndex].title === undefined) {
+            sets[setIndex].title = `Set ${setIndex + 1}`;
+        }
+
+        const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
+        const match = line.match(overrideTimeRegex);
+        const name = match ? match[1] : line;
+        const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
+
+        sets[sets.length - 1].exercises.push({ work: time, name: name });
+    }
+    // Make sure currentSetIndex is within bounds.
+    currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
+    currentSetExercise = Math.min(currentSetExercise, sets[currentSetIndex].exercises.length - 1);
+
+    remaining = currentExercise().work;
+
+    updateExercisesUi();
+    updateUi();
+}
+
+function shortBeep() {
+    beep(100);
+}
+
+function longBeep() {
+    beep(1000);
+}
+
+function beep(duration) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    gainNode.gain.value = 0.7;
+    oscillator.frequency.value = 490;
+    oscillator.type = 'triangle';
+
+    oscillator.start();
+
+    setTimeout(
+        function () {
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.00001, audioCtx.currentTime + 0.4
+            )
+            // oscillator.stop();
+        },
+        duration
+    );
+};
+    
+</script>
+</body>
