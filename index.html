@@ -240,12 +240,21 @@ Do
 <script>
 const id = function(id) { return document.getElementById(id); };
 
+Array.prototype.last = function() {
+    return this[this.length - 1];
+};
+
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+// States
 const NOT_STARTED = 1;
 const PLAYING = 2;
 const PAUSED = 3;
 const COUNTDOWN = 4;
+
+// Interval types
+const EXERCISE_INTERVAL = 1;
+const REST_INTERVAL = 2;
 
 const DEFAULT_WORK = 20;
 const DEFAULT_REST = 5;
@@ -289,7 +298,7 @@ function currentSet() {
 }
 
 function currentExercise() {
-    return sets[currentSetIndex].exercises[currentSetExercise];
+    return sets[currentSetIndex].intervals[currentSetExercise];
 }
 
 function toggleState() {
@@ -363,7 +372,7 @@ function updateSecond() {
     remaining--;
     if(remaining <= 0) {
         if(isWork) {
-            if(currentSetExercise < sets[currentSetIndex].exercises.length - 1) {
+            if(currentSetExercise < sets[currentSetIndex].intervals.length - 1) {
                 // This is not the last exercise. Move on to the rest period.
                 if (currentSet().rest > 0) {
                     // Don't beep for sets that have rest of 0 seconds.
@@ -385,14 +394,14 @@ function updateSecond() {
                 clearInterval(intervalId);
                 intervalId = null;
                 state = NOT_STARTED;
-                remaining = currentExercise().work;
+                remaining = currentExercise().duration;
             }
         } else {
             longBeep();
             // Just finished rest period. Move on to the next exercise in the set.
             isWork = true;
             currentSetExercise++;
-            remaining = currentExercise().work;
+            remaining = currentExercise().duration;
         }
     }
     updateUi();
@@ -454,17 +463,17 @@ function updateRemainingTimeInSet(setIndex, timeRemaining) {
 function getRemainingInCurrentSet() {
     set = sets[currentSetIndex];
     let remainingInSet = 0;
-    for (let i = currentSetExercise + 1; i < set.exercises.length; i++) {
-        remainingInSet += set.exercises[i].work;
+    for (let i = currentSetExercise + 1; i < set.intervals.length; i++) {
+        remainingInSet += set.intervals[i].duration;
     }
     // Add rest periods.
     if (isWork) {
         // Number of remaining exercises multiplied by rest period
-        remainingInSet += (set.exercises.length - currentSetExercise - 1) * set.rest;
+        remainingInSet += (set.intervals.length - currentSetExercise - 1) * set.rest;
     } else {
         // We are currently in a rest period that is being counted down. Thus don't count one
         // of the rest periods - it will be in the "remaining" variable.
-        remainingInSet += (set.exercises.length - currentSetExercise - 2) * set.rest;
+        remainingInSet += (set.intervals.length - currentSetExercise - 2) * set.rest;
     }
     return remainingInSet + remaining;
 }
@@ -479,8 +488,8 @@ function getRemainingInFollowingSets() {
 
 function getTotalTimeInSet(setIndex) {
     const set = sets[setIndex];
-    const workTime = set.exercises.map(e => e.work).reduce((a, b) => a + b, 0);
-    const restTime = (set.exercises.length - 1) * set.rest;
+    const workTime = set.intervals.map(e => e.duration).reduce((a, b) => a + b, 0);
+    const restTime = (set.intervals.length - 1) * set.rest;
     return workTime + restTime;
 }
 
@@ -506,7 +515,7 @@ function updateUi() {
                 timerContainer.classList.remove('rest', 'inactive', 'countdown');
                 timerContainer.classList.add('work');
                 id('action_label').innerText = 
-                    sets[currentSetIndex].exercises[currentSetExercise].name;
+                    sets[currentSetIndex].intervals[currentSetExercise].name;
             } else {
                 timerContainer.classList.remove('work', 'inactive', 'countdown');
                 timerContainer.classList.add('rest');
@@ -604,28 +613,31 @@ function updateExercisesUi() {
         setDiv.appendChild(exercisesDiv);
         exercisesDiv.classList.add('exercises');
         
-        for(let exerciseIndex = 0; exerciseIndex < set.exercises.length; exerciseIndex++) {
-            const exercise = set.exercises[exerciseIndex];
+        for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
+            if (set.intervals[intervalIndex].type != EXERCISE_INTERVAL) {
+                continue;
+            }
+            const exercise = set.intervals[intervalIndex];
             const exerciseDiv = document.createElement("div");
             exercisesDiv.appendChild(exerciseDiv);
-            exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
+            exerciseDiv.id = 's' + setIndex + 'e' + intervalIndex;
             exerciseDiv.classList.add('exercise');
             exerciseDiv.onclick = (e) => {
                 if (state == PAUSED || state == NOT_STARTED) {
                     currentSetIndex = setIndex;
-                    currentSetExercise = exerciseIndex;
-                    remaining = currentExercise().work;
+                    currentSetExercise = intervalIndex;
+                    remaining = currentExercise().duration;
                     isWork = true;
                     updateUi();
                 }
             }
             const textNode = document.createTextNode(exercise.name);
             exerciseDiv.appendChild(textNode);
-            if (exercise.work != set.work) {
+            if (exercise.duration != set.work) {
                 const timeNode = document.createElement("span");
                 exerciseDiv.appendChild(timeNode);
                 timeNode.classList.add('time-override');
-                timeNode.innerText = " (" + exercise.work + " seconds) ";
+                timeNode.innerText = " (" + exercise.duration + " seconds) ";
             }
         }
     }
@@ -640,10 +652,10 @@ function reload() {
     // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
     // a new set.
     sets = [];
-    sets.push({ exercises: []});
+    sets.push({ intervals: []});
     for(let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        if(sets[setIndex].exercises.length == 0) {
+        if(sets[setIndex].intervals.length == 0) {
             if(line == "") {
                 // It's not a new set because we don't have any exercises in the current set yet.
                 // Skip this new line.
@@ -653,13 +665,13 @@ function reload() {
         // If starts with '#' and we don't have any exercises yet and the title hasn't been 
         // set yet.
         if(line.startsWith('#') && sets[setIndex].title === undefined && 
-            sets[setIndex].exercises.length == 0) {
+            sets[setIndex].intervals.length == 0) {
             sets[setIndex].title = line.substring(1);
             continue;
         }
 
-        // If we don't have any exercises yet and the work/reset time hasn't been set yet.
-        if(sets[setIndex].exercises.length == 0 && sets[setIndex].work === undefined) {
+        // If we don't have any exercises yet and the work/rest time hasn't been set yet.
+        if(sets[setIndex].intervals.length == 0 && sets[setIndex].work === undefined) {
             // Check for time spec
             // Initialize work/rest time for new set.
             const match = line.match(timeSpecRegEx);
@@ -671,7 +683,7 @@ function reload() {
         }
 
         if(line.trim() == "") {
-            sets.push({ exercises: []});
+            sets.push({ intervals: []});
             setIndex++;
             continue;
         }
@@ -694,13 +706,18 @@ function reload() {
         const name = match ? match[1] : line;
         const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
 
-        sets[sets.length - 1].exercises.push({ work: time, name: name });
+        // If this is not the first exercise, add a rest period before it.
+        if(sets.last().intervals.length != 0) {
+            sets.last()
+                .intervals.push({ duration: sets.last().rest, name: 'Rest', type: REST_INTERVAL });
+        }
+        sets.last().intervals.push({ duration: time, name: name, type: EXERCISE_INTERVAL });
     }
     // Make sure currentSetIndex is within bounds.
     currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
-    currentSetExercise = Math.min(currentSetExercise, sets[currentSetIndex].exercises.length - 1);
+    currentSetExercise = Math.min(currentSetExercise, sets[currentSetIndex].intervals.length - 1);
 
-    remaining = currentExercise().work;
+    remaining = currentExercise().duration;
 
     updateExercisesUi();
     updateUi();
