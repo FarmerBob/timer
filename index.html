@@ -314,8 +314,7 @@ function toggleState() {
         case PAUSED:
             previousState = state;
             countdownSeconds = id("countdown-start").value;
-            state = COUNTDOWN;
-            if (countdownSeconds > 0) {
+            if (countdownSeconds > 0 && isWork) {
                 previousState = state;
                 state = COUNTDOWN;
             } else {
@@ -413,7 +412,7 @@ function define() {
     if (state == COUNTDOWN || state == PLAYING) {
         toggleState();
     }
-    
+
     isDefineMode = true;
     updateUi();
     id('exercises_def').focus();
