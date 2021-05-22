@@ -687,8 +687,9 @@ function reload() {
         const name = match ? match[1] : line;
         const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
 
-        // If this is not the first exercise, add a rest period before it.
-        if(sets.last().intervals.length != 0) {
+        // If this is not the first exercise, add a rest period before it (if it has positive
+        // duration)
+        if(sets.last().intervals.length != 0 && sets.last().rest > 0) {
             sets.last()
                 .intervals.push({ duration: sets.last().rest, name: 'Rest', type: REST_INTERVAL });
         }
