@@ -610,11 +610,13 @@ function updateExercisesUi() {
             exerciseDiv.id = 's' + setIndex + 'e' + exerciseIndex;
             exerciseDiv.classList.add('exercise');
             exerciseDiv.onclick = (e) => {
-                currentSetIndex = setIndex;
-                currentSetExercise = exerciseIndex;
-                remaining = currentExercise().work;
-                isWork = true;
-                updateUi();
+                if (state == PAUSED || state == NOT_STARTED) {
+                    currentSetIndex = setIndex;
+                    currentSetExercise = exerciseIndex;
+                    remaining = currentExercise().work;
+                    isWork = true;
+                    updateUi();
+                }
             }
             const textNode = document.createTextNode(exercise.name);
             exerciseDiv.appendChild(textNode);
