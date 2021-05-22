@@ -277,7 +277,6 @@ const storedCountdown = localStorage.getItem('countdownStart');
 if (storedCountdown != null) {
     const storedCountdownInt = parseInt(storedCountdown);
     if (!isNaN(storedCountdownInt) && storedCountdownInt >= 0 && storedCountdown <= 10) {
-        console.log(storedCountdownInt);
         id("countdown-start").value = storedCountdownInt;
         countdownValueOutput.value = storedCountdownInt;;
     }
@@ -346,7 +345,6 @@ function toggleState() {
 
 function updateCountdown() {
     countdownSeconds--;
-    console.log("countdownSeconds: " + countdownSeconds);
     if (countdownSeconds <= 0) {
         if(intervalId) {
             clearInterval(intervalId);
