@@ -265,9 +265,8 @@ let state = NOT_STARTED;
 let previousState = NOT_STARTED;
 let intervalId = null;
 
-let isWork = true;
 let currentSetIndex = 0;
-let currentSetExercise = 0;
+let currentSetInterval = 0;
 let isDefineMode = false;
 let sets = [];
 
@@ -293,12 +292,12 @@ if (storedCountdown != null) {
 
 reload();
 
-function currentSet() {
+function getCurrentSet() {
     return sets[currentSetIndex];
 }
 
-function currentExercise() {
-    return sets[currentSetIndex].intervals[currentSetExercise];
+function getCurrentInterval() {
+    return sets[currentSetIndex].intervals[currentSetInterval];
 }
 
 function toggleState() {
@@ -322,7 +321,7 @@ function toggleState() {
         case PAUSED:
             previousState = state;
             countdownSeconds = id("countdown-start").value;
-            if (countdownSeconds > 0 && isWork) {
+            if (countdownSeconds > 0 && getCurrentInterval.type == EXERCISE_INTERVAL) {
                 previousState = state;
                 state = COUNTDOWN;
             } else {
@@ -371,37 +370,25 @@ function updateCountdown() {
 function updateSecond() {
     remaining--;
     if(remaining <= 0) {
-        if(isWork) {
-            if(currentSetExercise < sets[currentSetIndex].intervals.length - 1) {
-                // This is not the last exercise. Move on to the rest period.
-                if (currentSet().rest > 0) {
-                    // Don't beep for sets that have rest of 0 seconds.
-                    longBeep();
-                }
-                isWork = false;
-                remaining = currentSet().rest;
-            } else {
-                longBeep();
-                // We just finished work for the last exercise in the set.
-                // Move on to the next set, or back to the first set.
-                currentSetExercise = 0;
-                if(currentSetIndex == sets.length - 1) {
-                    currentSetIndex = 0;
-                } else {
-                    currentSetIndex++;
-                }
-                // Stop the timer.
-                clearInterval(intervalId);
-                intervalId = null;
-                state = NOT_STARTED;
-                remaining = currentExercise().duration;
-            }
+        longBeep();
+        if(currentSetInterval < sets[currentSetIndex].intervals.length - 1) {
+            // This is not the last interval in the set. Move on to the next one.
+            currentSetInterval++;
+            remaining = getCurrentInterval().duration;
         } else {
-            longBeep();
-            // Just finished rest period. Move on to the next exercise in the set.
-            isWork = true;
-            currentSetExercise++;
-            remaining = currentExercise().duration;
+            // We just finished the last interval in teh set.
+            // Move on to the next set, or back to the first set.
+            currentSetInterval = 0;
+            if(currentSetIndex == sets.length - 1) {
+                currentSetIndex = 0;
+            } else {
+                currentSetIndex++;
+            }
+            // Stop the timer.
+            clearInterval(intervalId);
+            intervalId = null;
+            state = NOT_STARTED;
+            remaining = getCurrentInterval().duration;
         }
     }
     updateUi();
@@ -459,21 +446,10 @@ function updateRemainingTimeInSet(setIndex, timeRemaining) {
 
 }
 
-
 function getRemainingInCurrentSet() {
-    set = sets[currentSetIndex];
     let remainingInSet = 0;
-    for (let i = currentSetExercise + 1; i < set.intervals.length; i++) {
-        remainingInSet += set.intervals[i].duration;
-    }
-    // Add rest periods.
-    if (isWork) {
-        // Number of remaining exercises multiplied by rest period
-        remainingInSet += (set.intervals.length - currentSetExercise - 1) * set.rest;
-    } else {
-        // We are currently in a rest period that is being counted down. Thus don't count one
-        // of the rest periods - it will be in the "remaining" variable.
-        remainingInSet += (set.intervals.length - currentSetExercise - 2) * set.rest;
+    for (let i = currentSetInterval + 1; i < getCurrentSet().intervals.length; i++) {
+        remainingInSet += getCurrentSet().intervals[i].duration;
     }
     return remainingInSet + remaining;
 }
@@ -511,11 +487,11 @@ function updateUi() {
             if(id('start_button').innerText != 'pause') {
                 id('start_button').innerText = 'pause';
             }
-            if(isWork) {
+            if(getCurrentInterval().type == EXERCISE_INTERVAL) {
                 timerContainer.classList.remove('rest', 'inactive', 'countdown');
                 timerContainer.classList.add('work');
                 id('action_label').innerText = 
-                    sets[currentSetIndex].intervals[currentSetExercise].name;
+                    sets[currentSetIndex].intervals[currentSetInterval].name;
             } else {
                 timerContainer.classList.remove('work', 'inactive', 'countdown');
                 timerContainer.classList.add('rest');
@@ -548,7 +524,13 @@ function updateUi() {
     // Give a selected style to the current exercise.
     const exercisesContainer = id("exercises");
     const previouslySelected = document.querySelector('div.exercise.current');
-    const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
+
+    // If the current interval is rest, make the next exercise the current one for UI purposes.
+    const currentOrNextExerciseIndex = 
+        getCurrentInterval().type == EXERCISE_INTERVAL ? 
+        currentSetInterval : currentSetInterval + 1;
+
+    const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentOrNextExerciseIndex);
     const timerHeight = timerContainer.offsetHeight;
     document
         .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight - 1);
@@ -625,9 +607,8 @@ function updateExercisesUi() {
             exerciseDiv.onclick = (e) => {
                 if (state == PAUSED || state == NOT_STARTED) {
                     currentSetIndex = setIndex;
-                    currentSetExercise = intervalIndex;
-                    remaining = currentExercise().duration;
-                    isWork = true;
+                    currentSetInterval = intervalIndex;
+                    remaining = getCurrentInterval().duration;
                     updateUi();
                 }
             }
@@ -715,9 +696,9 @@ function reload() {
     }
     // Make sure currentSetIndex is within bounds.
     currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
-    currentSetExercise = Math.min(currentSetExercise, sets[currentSetIndex].intervals.length - 1);
+    currentSetInterval = Math.min(currentSetInterval, sets[currentSetIndex].intervals.length - 1);
 
-    remaining = currentExercise().duration;
+    remaining = getCurrentInterval().duration;
 
     updateExercisesUi();
     updateUi();
