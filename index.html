@@ -171,7 +171,7 @@ div.exercises {
             <div id='countdown-display'></div>
         </div>
         <div id='start_container'>
-            <button onclick="start()" id='start_button'>start</button>
+            <button onclick="toggleState()" id='start_button'>start</button>
         </div>
         <div id='workout-info'>
             <div>Workout Time Remaining: 
@@ -293,7 +293,7 @@ function currentExercise() {
     return sets[currentSetIndex].exercises[currentSetExercise];
 }
 
-function start() {
+function toggleState() {
     shortBeep();
     switch(state) {
         case COUNTDOWN:
@@ -410,6 +410,10 @@ function play() {
 }
 
 function define() {
+    if (state == COUNTDOWN || state == PLAYING) {
+        toggleState();
+    }
+    
     isDefineMode = true;
     updateUi();
     id('exercises_def').focus();
