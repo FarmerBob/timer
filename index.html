@@ -27,8 +27,16 @@ body {
   transition-duration: 0.3s;
 }
 
+.exercises div.rest.custom {
+    display: block;
+}
+
 .time-override {
     font-style: italic;
+}
+
+.exercises div.rest {
+    display: none;
 }
 
 .exercises div.current {
@@ -534,28 +542,31 @@ function updateUi() {
     const exercisesContainer = id("exercises");
     const previouslySelected = document.querySelector('.exercises div.current');
 
-    // // If the current interval is rest, make the next exercise the current one for UI purposes.
-    // const currentOrNextExerciseIndex = 
-    //     getCurrentInterval().type == EXERCISE_INTERVAL ? 
-    //     currentSetInterval : currentSetInterval + 1;
-    const currentOrNextExerciseIndex = currentSetInterval;
+    let currentIntervalElement = id('s' + currentSetIndex + 'e' + currentSetInterval);
 
-    const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentOrNextExerciseIndex);
+    // If the current interval is a rest interval that is not custom (and thus is not visible), 
+    // mark the next interval as the current one.
+    if (currentIntervalElement
+        && currentIntervalElement.classList.contains('rest')
+        && !currentIntervalElement.classList.contains('custom')) {
+        currentIntervalElement = id('s' + currentSetIndex + 'e' + (currentSetInterval + 1));
+    }
+
     const timerHeight = timerContainer.offsetHeight;
     document
         .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight - 1);
     id('placeholder-for-scroll-top').style.height = timerHeight - 1;
-    if (previouslySelected != currentExerciseElement) {
+    if (previouslySelected != currentIntervalElement) {
         if (previouslySelected != null) {
             previouslySelected.classList.remove('current');
             previouslySelected.ontransitionend = () => {}
         }
-        if (currentExerciseElement != null) {
-            currentExerciseElement.classList.add("current");
+        if (currentIntervalElement != null) {
+            currentIntervalElement.classList.add("current");
             // Must scroll after the font size is increased, otherwise it will be resized after the
             // scrolling and be cut off.
-            currentExerciseElement.ontransitionend = () => {
-                scrollToElement(currentExerciseElement);
+            currentIntervalElement.ontransitionend = () => {
+                scrollToElement(currentIntervalElement);
             }
         }
     }
@@ -614,9 +625,6 @@ function updateExercisesUi() {
         }
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
-            // if (set.intervals[intervalIndex].type != EXERCISE_INTERVAL) {
-            //     continue;
-            // }
             const exercise = set.intervals[intervalIndex];
             const exerciseDiv = document.createElement("div");
             exercisesDiv.appendChild(exerciseDiv);
@@ -626,8 +634,8 @@ function updateExercisesUi() {
             }
             if (set.intervals[intervalIndex].type == REST_INTERVAL) {
                 exerciseDiv.classList.add('rest');
-                if (!showRestPeriods) {
-                    exerciseDiv.style.display = 'none';
+                if (showRestPeriods) {
+                    exerciseDiv.classList.add('custom');
                 }
             }
             exerciseDiv.onclick = (e) => {
