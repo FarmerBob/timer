@@ -625,20 +625,20 @@ function updateExercisesUi() {
         }
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
-            const exercise = set.intervals[intervalIndex];
-            const exerciseDiv = document.createElement("div");
-            exercisesDiv.appendChild(exerciseDiv);
-            exerciseDiv.id = 's' + setIndex + 'e' + intervalIndex;
+            const interval = set.intervals[intervalIndex];
+            const intervalDiv = document.createElement("div");
+            exercisesDiv.appendChild(intervalDiv);
+            intervalDiv.id = 's' + setIndex + 'e' + intervalIndex;
             if (set.intervals[intervalIndex].type == EXERCISE_INTERVAL) {
-                exerciseDiv.classList.add('exercise');
+                intervalDiv.classList.add('exercise');
             }
             if (set.intervals[intervalIndex].type == REST_INTERVAL) {
-                exerciseDiv.classList.add('rest');
+                intervalDiv.classList.add('rest');
                 if (showRestPeriods) {
-                    exerciseDiv.classList.add('custom');
+                    intervalDiv.classList.add('custom');
                 }
             }
-            exerciseDiv.onclick = (e) => {
+            intervalDiv.onclick = (e) => {
                 if (state == PAUSED || state == NOT_STARTED) {
                     currentSetIndex = setIndex;
                     currentSetInterval = intervalIndex;
@@ -646,13 +646,16 @@ function updateExercisesUi() {
                     updateUi();
                 }
             }
-            const textNode = document.createTextNode(exercise.name);
-            exerciseDiv.appendChild(textNode);
-            if (exercise.duration != set.work) {
+            const textNode = document.createTextNode(interval.name);
+            intervalDiv.appendChild(textNode);
+            const timeOverridden =
+                (interval.type == EXERCISE_INTERVAL && interval.duration != set.work)
+                || (interval.type == REST_INTERVAL && interval.duration != set.rest);
+            if (timeOverridden) {
                 const timeNode = document.createElement("span");
-                exerciseDiv.appendChild(timeNode);
+                intervalDiv.appendChild(timeNode);
                 timeNode.classList.add('time-override');
-                timeNode.innerText = " (" + exercise.duration + " seconds) ";
+                timeNode.innerText = " (" + interval.duration + " seconds) ";
             }
         }
     }
