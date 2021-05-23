@@ -182,8 +182,8 @@ div.set-time-info {
     margin-bottom: 8px;
     margin-left: 8px;
     margin-right: 8px;
-    
 }
+
 </style>
 </head>
 
@@ -206,7 +206,9 @@ div.set-time-info {
             <div>Workout Time Remaining: 
                 <span id='workoutRemainingMin'>34</span>m
                 <span id='workoutRemainingSec'>5</span>s</div>
-            <button onclick="define()" id='edit'>Edit</button>
+            <div>
+                <button onclick="define()" id='edit'>Edit</button>
+            </div>
         </div>
     </div>
 </div>
@@ -224,6 +226,10 @@ div.set-time-info {
                 <input type='range' id='countdown-start' min='0' max='10'
                     onchange="countdownValueOutput.value = this.value">
                 <output id='countdownValueOutput'></output> 
+            </div>
+            <div>
+                <input type="checkbox" id='autoplay'>
+                <label for='autoplay'>Autoplay</label>
             </div>
 
             <span>Exercises:</span>
@@ -405,7 +411,7 @@ function updateSecond() {
             currentSetInterval++;
             remaining = getCurrentInterval().duration;
         } else {
-            // We just finished the last interval in teh set.
+            // We just finished the last interval in the set.
             // Move on to the next set, or back to the first set.
             currentSetInterval = 0;
             if(currentSetIndex == sets.length - 1) {
@@ -414,9 +420,11 @@ function updateSecond() {
                 currentSetIndex++;
             }
             // Stop the timer.
-            clearInterval(intervalId);
-            intervalId = null;
-            state = NOT_STARTED;
+            if (currentSetIndex == 0 || autoplay.value != 'on') {
+                clearInterval(intervalId);
+                intervalId = null;
+                state = NOT_STARTED;
+            }
             remaining = getCurrentInterval().duration;
         }
     }
