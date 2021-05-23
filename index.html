@@ -11,9 +11,18 @@ body {
     margin: 0;
 }
 
-div.exercise {
+.exercises div.exercise {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 30px;
+  transition-property: font-size;
+  transition-duration: 0.3s;
+}
+
+.exercises div.rest {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  font-style: oblique;
+  color: crimson;
   transition-property: font-size;
   transition-duration: 0.3s;
 }
@@ -22,7 +31,7 @@ div.exercise {
     font-style: italic;
 }
 
-div.exercise.current {
+.exercises div.current {
   font-weight: bold;
   font-size: 40px;
 }
@@ -523,12 +532,13 @@ function updateUi() {
 
     // Give a selected style to the current exercise.
     const exercisesContainer = id("exercises");
-    const previouslySelected = document.querySelector('div.exercise.current');
+    const previouslySelected = document.querySelector('.exercises div.current');
 
-    // If the current interval is rest, make the next exercise the current one for UI purposes.
-    const currentOrNextExerciseIndex = 
-        getCurrentInterval().type == EXERCISE_INTERVAL ? 
-        currentSetInterval : currentSetInterval + 1;
+    // // If the current interval is rest, make the next exercise the current one for UI purposes.
+    // const currentOrNextExerciseIndex = 
+    //     getCurrentInterval().type == EXERCISE_INTERVAL ? 
+    //     currentSetInterval : currentSetInterval + 1;
+    const currentOrNextExerciseIndex = currentSetInterval;
 
     const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentOrNextExerciseIndex);
     const timerHeight = timerContainer.offsetHeight;
@@ -594,16 +604,32 @@ function updateExercisesUi() {
         const exercisesDiv = document.createElement("div");
         setDiv.appendChild(exercisesDiv);
         exercisesDiv.classList.add('exercises');
+
+        let showRestPeriods = true;
+        // Are there any custom rest intervals, or a rest interval that is the first or last 
+        // interval in the set?
+        if (set.intervals.every((i) => i.type != REST_INTERVAL || i.duration == set.rest) &&
+            set.intervals[0].type != REST_INTERVAL && set.intervals.last() != REST_INTERVAL) {
+            showRestPeriods = false;
+        }
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
-            if (set.intervals[intervalIndex].type != EXERCISE_INTERVAL) {
-                continue;
-            }
+            // if (set.intervals[intervalIndex].type != EXERCISE_INTERVAL) {
+            //     continue;
+            // }
             const exercise = set.intervals[intervalIndex];
             const exerciseDiv = document.createElement("div");
             exercisesDiv.appendChild(exerciseDiv);
             exerciseDiv.id = 's' + setIndex + 'e' + intervalIndex;
-            exerciseDiv.classList.add('exercise');
+            if (set.intervals[intervalIndex].type == EXERCISE_INTERVAL) {
+                exerciseDiv.classList.add('exercise');
+            }
+            if (set.intervals[intervalIndex].type == REST_INTERVAL) {
+                exerciseDiv.classList.add('rest');
+                if (!showRestPeriods) {
+                    exerciseDiv.style.display = 'none';
+                }
+            }
             exerciseDiv.onclick = (e) => {
                 if (state == PAUSED || state == NOT_STARTED) {
                     currentSetIndex = setIndex;
@@ -682,18 +708,29 @@ function reload() {
             sets[setIndex].title = `Set ${setIndex + 1}`;
         }
 
-        const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
-        const match = line.match(overrideTimeRegex);
-        const name = match ? match[1] : line;
-        const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
-
-        // If this is not the first exercise, add a rest period before it (if it has positive
-        // duration)
-        if(sets.last().intervals.length != 0 && sets.last().rest > 0) {
+        // Check if this is a rest override
+        const restRegex = /^\s*rest\s+(\d+)\s*$/;
+        const restMatch = line.match(restRegex);
+        if (restMatch) {
+            const restDuration = parseInt(restMatch[1]);
             sets.last()
-                .intervals.push({ duration: sets.last().rest, name: 'Rest', type: REST_INTERVAL });
+                .intervals.push({ duration: restDuration, name: 'Rest', type: REST_INTERVAL });
+        } else {
+            const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
+            const match = line.match(overrideTimeRegex);
+            const name = match ? match[1] : line;
+            const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
+
+            // If we don't already have a rest period, and this is not the first exercise, and set rest
+            // duration is non-zero, add a rest interval before the current exercise.
+            const previousIntervalIsRest = 
+                sets.last().intervals.length > 0 && sets.last().intervals.last().type == REST_INTERVAL;
+            if (!previousIntervalIsRest && sets.last().intervals.length != 0 && sets.last().rest > 0) {
+                sets.last()
+                    .intervals.push({ duration: sets.last().rest, name: 'Rest', type: REST_INTERVAL });
+            }
+            sets.last().intervals.push({ duration: time, name: name, type: EXERCISE_INTERVAL });
         }
-        sets.last().intervals.push({ duration: time, name: name, type: EXERCISE_INTERVAL });
     }
     // Make sure currentSetIndex is within bounds.
     currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
