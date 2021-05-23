@@ -68,6 +68,14 @@ div.set-title {
     font-size: 40px;
 }
 
+.rest-set div.set-title {
+    color: crimson;
+}
+
+.rest-set .set-interval-time {
+    visibility: hidden;
+}
+
 div.set-time-info {
     display: flex;
     justify-content: space-between;
@@ -593,6 +601,9 @@ function updateExercisesUi() {
         setsContainer.appendChild(setDiv);
         setDiv.classList.add('set');
         setDiv.id = "set" + setIndex;
+        if (set.isRestSet) {
+            setDiv.classList.add('rest-set');
+        }
         const setInfo = document.createElement("div");
         setDiv.appendChild(setInfo);
         setInfo.classList.add('set-info');
@@ -701,6 +712,7 @@ function reload() {
         }
 
         if(line.trim() == "") {
+            // Start a new set.
             sets.push({ intervals: []});
             setIndex++;
             continue;
@@ -713,10 +725,6 @@ function reload() {
         }
         if(sets[setIndex].rest === undefined) {
             sets[setIndex].rest = setIndex == 0 ? DEFAULT_REST : sets[setIndex - 1].rest;
-        }
-        // If no title is set, use the default title
-        if(sets[setIndex].title === undefined) {
-            sets[setIndex].title = `Set ${setIndex + 1}`;
         }
 
         // Check if this is a rest override
@@ -743,6 +751,21 @@ function reload() {
             sets.last().intervals.push({ duration: time, name: name, type: EXERCISE_INTERVAL });
         }
     }
+    // For each set, if the title is not set, set it.
+    for (let i = 0; i < sets.length; i++) {
+        // Start a new set, but first set the title of the current set if needed.
+        if(sets[i].title === undefined) {
+            // Check if it's the rest-only set.
+            if(sets[i].intervals.length == 1 
+                && sets[i].intervals[0].type == REST_INTERVAL) {
+                sets[i].title = "Rest"
+                sets[i].isRestSet = true;
+            } else {
+                sets[i].title = `Set ${i + 1}`;
+            }
+        }
+    }
+
     // Make sure currentSetIndex is within bounds.
     currentSetIndex = Math.min(currentSetIndex, sets.length - 1);
     currentSetInterval = Math.min(currentSetInterval, sets[currentSetIndex].intervals.length - 1);
