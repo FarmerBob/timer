@@ -688,7 +688,7 @@ function reload() {
     let exercisesString = document.getElementById("exercises_def").value;
     exercisesString = exercisesString.trim();
     let lines = exercisesString.split("\n");
-    const timeSpecRegEx = /^\(?(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)?\)?$/;
+    const timeSpecRegEx = /^\(?(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)?\)?$/i;
     let setIndex = 0;
     // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
     // a new set.
@@ -740,14 +740,14 @@ function reload() {
         }
 
         // Check if this is a rest override
-        const restRegex = /^\s*rest\s*:?\s*\(?(\d+)\s*(s|second|seconds)?\)?$/;
+        const restRegex = /^\s*rest\s*:?\s*\(?(\d+)\s*(s|second|seconds)?\)?$/i;
         const restMatch = line.match(restRegex);
         if (restMatch) {
             const restDuration = parseInt(restMatch[1]);
             sets.last()
                 .intervals.push({ duration: restDuration, name: 'Rest', type: REST_INTERVAL });
         } else {
-            const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/;
+            const overrideTimeRegex = /^(.+)\s*\((\d+)\s*(s|second|seconds)?\)$/i;
             const match = line.match(overrideTimeRegex);
             const name = match ? match[1] : line;
             const time = match ? parseInt(match[2]) : sets[sets.length - 1].work;
