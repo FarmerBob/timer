@@ -21,7 +21,7 @@ body {
 .exercises div.rest {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 20px;
-  font-style: oblique;
+  /*font-style: oblique;*/
   color: crimson;
   transition-property: font-size;
   transition-duration: 0.3s;
@@ -51,6 +51,11 @@ div.separator {
 #placeholder-for-scroll-top { height: 50%; }
 #placeholder-for-scroll-bottom { height: 100%; }
 
+#sets {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
 div.set-info {
   /*opacity: .5;*/
   background-color: white;
@@ -60,8 +65,9 @@ div.set-info {
   top: 0;
   padding-top: 20px;
   padding-bottom: 20px;
-  padding-left: 8px;
   /*border-bottom: 1px solid black;*/
+  font-style: oblique;
+  font-weight: bold;
 }
 
 div.set-title {
@@ -79,11 +85,6 @@ div.set-title {
 div.set-time-info {
     display: flex;
     justify-content: space-between;
-}
-
-div.exercises {
-    margin-left: 8px;
-    margin-right: 8px;
 }
 
 #timer-container {
@@ -176,9 +177,12 @@ div.exercises {
 
 #workout-info {
     display: flex;
-    /*display: none;*/
+    font-weight: bold;
     justify-content: space-between;
     margin-bottom: 8px;
+    margin-left: 8px;
+    margin-right: 8px;
+    
 }
 </style>
 </head>
