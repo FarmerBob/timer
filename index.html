@@ -501,9 +501,7 @@ function getRemainingInFollowingSets() {
 
 function getTotalTimeInSet(setIndex) {
     const set = sets[setIndex];
-    const workTime = set.intervals.map(e => e.duration).reduce((a, b) => a + b, 0);
-    const restTime = (set.intervals.length - 1) * set.rest;
-    return workTime + restTime;
+    return set.intervals.map(e => e.duration).reduce((a, b) => a + b, 0);
 }
 
 function updateUi() {
