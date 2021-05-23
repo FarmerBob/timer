@@ -32,20 +32,6 @@ div.separator {
   height: 100;
 }
 
-#action_label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 40px;
-  text-align: center;
-}
-
-#work_label {
-  color: green;
-}
-
-#rest_label {
-  color: red;
-}
-
 #placeholder-for-scroll-top { height: 50%; }
 #placeholder-for-scroll-bottom { height: 100%; }
 
@@ -104,19 +90,42 @@ div.exercises {
   color: black;
 }
 
-#timer.work {
+.work #timer {
   background-color: #4CAF50;
   color: white;
 }
 
-#timer.rest {
+.rest #timer {
   background-color: crimson;
   color: white;
 }
 
-#timer.inactive {
+.countdown #timer {
+  background-color: crimson;
+  color: white;
+}
+
+.inactive #timer {
   background-color: #E7E7E7;
   color: black;
+}
+
+#action_label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 40px;
+  text-align: center;
+}
+
+.work #action_label {
+  color: green;
+}
+
+.rest #action_label {
+  color: crimson;
+}
+
+.countdown #action_label {
+  color: crimson;
 }
 
 #start_container {
@@ -152,39 +161,15 @@ div.exercises {
 
 <body>
 
-<!-- <a href="#" onclick="play()">Play</a>
-<a href="#" onclick="define()">Define</a> -->
-<div style="display: none;">
-    Sets: <span id='num_sets'></span>
-    Exercises: <span id='num_exercises'></span>
-</div>
-<div style="display: none;">
-    Set: <span id='current_set'></span>
-    Exercise: <span id='current_exercise'></span>
-</div>
-<div style="display: none;">
-Work: <span id='current_work'></span>
-Rest: <span id='current_rest'></span>
-</div>
-
 <div id='timer-container'>
     <div id='timer-container-inner'>
-        <div id='action_label'>
-            <div id='work_label'>
-                WORK
-            </div>
-            <div id='rest_label'>
-                REST
-            </div>
-            <div id='ready_label'>
-                READY
-            </div>
-            <div id='paused_label'>
-                PAUSED
-            </div>
+        <div id='action_label'> </div>
         </div>
         <div id='timer'>
-            <span id='mins'></span>:<span id='secs'></span>
+            <div id='timer-display'>
+                <span id='mins'></span>:<span id='secs'></span>
+            </div>
+            <div id='countdown-display'></div>
         </div>
         <div id='start_container'>
             <button onclick="start()" id='start_button'>start</button>
@@ -206,11 +191,18 @@ Rest: <span id='current_rest'></span>
         </div>
     
         <div style="display:none"  id='define_area'>
-            <span id=>Exercises:</span>
+            <div>
+                <label for='countdown-start'>Pre-start coundown:</label>
+                <input type='range' id='countdown-start' min='0' max='10'
+                    onchange="countdownValueOutput.value = this.value">
+                <output id='countdownValueOutput'></output> 
+            </div>
+
+            <span>Exercises:</span>
             <div>
                 <textarea id='exercises_def' rows='30' cols='40'
                 onchange='reload()'
-                onblur='play()'>
+                >
 #Core 1
 30/10
 Push up - side arm balance
@@ -240,6 +232,7 @@ Do
 
                 </textarea>
             </div>
+            <button onclick='play()'>Done editing</button>
         </div>
     </div>
 </div>
@@ -253,9 +246,15 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const NOT_STARTED = 1;
 const PLAYING = 2;
 const PAUSED = 3;
+const COUNTDOWN = 4;
+
 const DEFAULT_WORK = 20;
 const DEFAULT_REST = 5;
+
+const COUNTDOWN_START_SECONDS = 3;
+let countdownSeconds = COUNTDOWN_START_SECONDS
 let state = NOT_STARTED;
+let previousState = NOT_STARTED;
 let intervalId = null;
 
 let isWork = true;
@@ -273,6 +272,18 @@ if (storedExercises != null && storedExercises.trim() != "") {
     id('exercises_def').value = storedExercises;
 }
 
+id("countdown-start").value = COUNTDOWN_START_SECONDS;
+countdownValueOutput.value = COUNTDOWN_START_SECONDS;
+const storedCountdown = localStorage.getItem('countdownStart');
+if (storedCountdown != null) {
+    const storedCountdownInt = parseInt(storedCountdown);
+    if (!isNaN(storedCountdownInt) && storedCountdownInt >= 0 && storedCountdown <= 10) {
+        console.log(storedCountdownInt);
+        id("countdown-start").value = storedCountdownInt;
+        countdownValueOutput.value = storedCountdownInt;;
+    }
+}
+
 reload();
 
 function currentSet() {
@@ -286,14 +297,31 @@ function currentExercise() {
 function start() {
     shortBeep();
     switch(state) {
+        case COUNTDOWN:
+            state = previousState;
+            break;
         case NOT_STARTED:
-            state = PLAYING;
+            countdownSeconds = id("countdown-start").value;
+            if (countdownSeconds > 0) {
+                previousState = state;
+                state = COUNTDOWN;
+            } else {
+                state = PLAYING;
+            }
             break;
         case PLAYING:
             state = PAUSED; 
             break;
         case PAUSED:
-            state = PLAYING;
+            previousState = state;
+            countdownSeconds = id("countdown-start").value;
+            state = COUNTDOWN;
+            if (countdownSeconds > 0) {
+                previousState = state;
+                state = COUNTDOWN;
+            } else {
+                state = PLAYING;
+            }
             break;
     }
 
@@ -302,6 +330,13 @@ function start() {
         clearInterval(intervalId);
         intervalId = null;
     }
+    if (state == COUNTDOWN) {
+        intervalId = setInterval(
+            function() {
+                updateCountdown();
+            }, 1000
+        );
+    }
     if (state == PLAYING) {
         intervalId = setInterval(
             function() {
@@ -309,6 +344,23 @@ function start() {
             }, 1000
         );
     }
+}
+
+function updateCountdown() {
+    countdownSeconds--;
+    console.log("countdownSeconds: " + countdownSeconds);
+    if (countdownSeconds <= 0) {
+        if(intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        if (state == COUNTDOWN) {
+            state = PLAYING;
+            longBeep();
+            intervalId = setInterval(() => updateSecond(), 1000);
+        }
+    }
+    updateUi();
 }
 
 function updateSecond() {
@@ -354,6 +406,7 @@ function play() {
     isDefineMode = false;
     const exercisesString = id("exercises_def").value;
     localStorage.setItem('exercises', exercisesString);
+    localStorage.setItem('countdownStart', id("countdown-start").value);
     updateUi();
 }
 
@@ -432,61 +485,62 @@ function getTotalTimeInSet(setIndex) {
 }
 
 function updateUi() {
-    const timer = id('timer');
-    id("ready_label").style.display = "none";
-    id("work_label").style.display = "none";
-    id("rest_label").style.display = "none";
-    id("paused_label").style.display = "none";
+    const timerContainer = id('timer-container');
+    id("countdown-display").innerText = countdownSeconds;
     switch(state) {
         case NOT_STARTED:
+            id('timer-display').style.display = 'block';
+            id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'start';
-            timer.classList.remove('rest', 'work')
-            timer.classList.add('inactive');
-            id("ready_label").style.display = "block";
+            timerContainer.classList.remove('rest', 'work', 'countdown');
+            timerContainer.classList.add('inactive');
+            id("action_label").innerText = 'READY';
             break;
         case PLAYING:
-            id("ready_label").style.display = "none";
+            id('timer-display').style.display = 'block';
+            id('countdown-display').style.display = 'none';
             if(id('start_button').innerText != 'pause') {
                 id('start_button').innerText = 'pause';
             }
             if(isWork) {
-                timer.classList.remove('rest', 'inactive');
-                timer.classList.add('work');
-                id("work_label").style.display = "block";
+                timerContainer.classList.remove('rest', 'inactive', 'countdown');
+                timerContainer.classList.add('work');
+                id('action_label').innerText = 
+                    sets[currentSetIndex].exercises[currentSetExercise].name;
             } else {
-                timer.classList.remove('work', 'inactive');
-                timer.classList.add('rest');
-                id("rest_label").style.display = "block";
+                timerContainer.classList.remove('work', 'inactive', 'countdown');
+                timerContainer.classList.add('rest');
+                id("action_label").innerText = "REST"
             }
             break;
         case PAUSED:
+            id('timer-display').style.display = 'block';
+            id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'resume';
-            timer.classList.remove('rest', 'work')
-            timer.classList.add('inactive');
-            id("paused_label").style.display = "block";
+            timerContainer.classList.remove('rest', 'work', 'contdown')
+            timerContainer.classList.add('inactive');
+            id("action_label").innerText = "PAUSED"
+            break;
+        case COUNTDOWN:
+            timerContainer.classList.remove('rest', 'work', 'inactive');
+            timerContainer.classList.add('countdown');
+            id('timer-display').style.display = 'none';
+            id('countdown-display').style.display = 'block';
+            id("action_label").innerText = 'GET READY';
+            id('start_button').innerText = 'Cancel';
             break;
     }
     updateRemainingTime();
     id('play_area').style.display = isDefineMode ? "none" : "block";
-    id('timer-container').style.display = isDefineMode ? "none" : "block";
+    timerContainer.style.display = isDefineMode ? "none" : "block";
     id('define_area').style.display = isDefineMode ? "block" : "none";
-    id("current_work").innerText = currentExercise().work;
-    id("current_rest").innerText = currentExercise().rest;
-    id('num_sets').innerText = sets.length;
-    id('num_exercises').innerText = 
-        sets.reduce((a, c) => a + c.exercises.length, 0);
-    id('current_set').innerText = currentSetIndex;
-    id('current_exercise').innerText = currentSetExercise;
-    const timerContainer = id('timer-container');
-    const actionLabel = id('action_label');
     timerContainer.style.top = 0;
-    id('work_label').innerText = sets[currentSetIndex].exercises[currentSetExercise].name;
 
     // Give a selected style to the current exercise.
     const exercisesContainer = id("exercises");
     const previouslySelected = document.querySelector('div.exercise.current');
     const currentExerciseElement = id('s' + currentSetIndex + 'e' + currentSetExercise);
-    const timerHeight = id('timer-container').offsetHeight;
+    const timerHeight = timerContainer.offsetHeight;
     document
         .querySelectorAll('.set-info').forEach(t => t.style.top = timerHeight - 1);
     id('placeholder-for-scroll-top').style.height = timerHeight - 1;
@@ -579,7 +633,7 @@ function reload() {
     let exercisesString = document.getElementById("exercises_def").value;
     exercisesString = exercisesString.trim();
     let lines = exercisesString.split("\n");
-    const timeSpecRegEx = /^(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)?$/;
+    const timeSpecRegEx = /^\(?(\d+)\s*(s|second|seconds)?\s*\/\s*(\d+)\s*(s|second|seconds)?\)?$/;
     let setIndex = 0;
     // New lines are the set separator. Initialize sawNewLine to true so that we always begin with
     // a new set.
