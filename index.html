@@ -420,7 +420,7 @@ function updateSecond() {
                 currentSetIndex++;
             }
             // Stop the timer.
-            if (currentSetIndex == 0 || autoplay.value != 'on') {
+            if (currentSetIndex == 0 || !autoplay.checked) {
                 clearInterval(intervalId);
                 intervalId = null;
                 state = NOT_STARTED;
