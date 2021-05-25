@@ -356,7 +356,7 @@ function toggleState() {
         case PAUSED:
             previousState = state;
             countdownSeconds = id("countdown-start").value;
-            if (countdownSeconds > 0 && getCurrentInterval.type == EXERCISE_INTERVAL) {
+            if (countdownSeconds > 0 && getCurrentInterval().type == EXERCISE_INTERVAL) {
                 previousState = state;
                 state = COUNTDOWN;
             } else {
