@@ -220,53 +220,55 @@ div.set-time-info {
             <div id='placeholder-for-scroll-bottom'></div>
         </div>
     
-        <div style="display:none"  id='define_area'>
-            <div>
-                <label for='countdown-start'>Pre-start coundown:</label>
-                <input type='range' id='countdown-start' min='0' max='10'
-                    onchange="countdownValueOutput.value = this.value">
-                <output id='countdownValueOutput'></output> 
+        <div>
+            <div style="display:none"  id='define_area'>
+                <div>
+                    <label for='countdown-start'>Pre-start coundown:</label>
+                    <input type='range' id='countdown-start' min='0' max='10'
+                        onchange="countdownValueOutput.value = this.value">
+                    <output id='countdownValueOutput'></output> 
+                </div>
+                <div>
+                    <input type="checkbox" id='autoplay'>
+                    <label for='autoplay'>Autoplay</label>
+                </div>
+
+                <span>Exercises:</span>
+                <div>
+                    <textarea id='exercises_def' rows='30' cols='40'
+                    onchange='reload()'
+                    >
+    #Core 1
+    30/10
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+
+    20/5
+    # Core 2
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+    Push up - side arm balance
+    Squats
+
+
+    Kote
+    Kote-Men
+    Do
+
+                    </textarea>
+                </div>
+                <button onclick='play()'>Done editing</button>
             </div>
-            <div>
-                <input type="checkbox" id='autoplay'>
-                <label for='autoplay'>Autoplay</label>
-            </div>
-
-            <span>Exercises:</span>
-            <div>
-                <textarea id='exercises_def' rows='30' cols='40'
-                onchange='reload()'
-                >
-#Core 1
-30/10
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-
-20/5
-# Core 2
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-Push up - side arm balance
-Squats
-
-
-Kote
-Kote-Men
-Do
-
-                </textarea>
-            </div>
-            <button onclick='play()'>Done editing</button>
         </div>
     </div>
 </div>
@@ -324,6 +326,18 @@ if (storedCountdown != null) {
         countdownValueOutput.value = storedCountdownInt;;
     }
 }
+
+document.addEventListener('keyup', e => {
+    if(e.key == 'e' || e.key == 'E') {
+        define();
+    }
+})
+
+document.addEventListener('keyup', e => {
+    if(e.ctrlKey && e.key == 'Enter') {
+        play();
+    }
+})
 
 reload();
 
@@ -432,6 +446,10 @@ function updateSecond() {
 }
 
 function play() {
+    if(!isDefineMode) {
+        return;
+    }
+
     isDefineMode = false;
     const exercisesString = id("exercises_def").value;
     localStorage.setItem('exercises', exercisesString);
@@ -440,6 +458,10 @@ function play() {
 }
 
 function define() {
+    if(isDefineMode) {
+        return;
+    }
+
     if (state == COUNTDOWN || state == PLAYING) {
         toggleState();
     }
