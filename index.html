@@ -184,6 +184,40 @@ div.set-time-info {
     margin-right: 8px;
 }
 
+#define-inner {
+    display: flex;
+}
+
+#exercises_def {
+    height: 85vh;
+}
+
+#documentation {
+    margin-left: 38px;
+    margin-top: 40px;
+    margin-right: 8px;
+    font-family: sans-serif;
+}
+
+code {
+    font-weight: bold;
+}
+
+pre {
+    margin-top: 0;
+}
+
+#documentation .work {
+    color: green;
+}
+
+#documentation .rest {
+    color: crimson;
+}
+
+#documentation .title {
+    background-color: lightcyan;
+}
 </style>
 </head>
 
@@ -220,54 +254,130 @@ div.set-time-info {
             <div id='placeholder-for-scroll-bottom'></div>
         </div>
     
-        <div>
-            <div style="display:none"  id='define_area'>
+        <div style="display:none"  id='define_area'>
+            <div id='define-inner'>
                 <div>
-                    <label for='countdown-start'>Pre-start coundown:</label>
-                    <input type='range' id='countdown-start' min='0' max='10'
-                        onchange="countdownValueOutput.value = this.value">
-                    <output id='countdownValueOutput'></output> 
+                    <div>
+                        <label for='countdown-start'>Pre-start coundown:</label>
+                        <input type='range' id='countdown-start' min='0' max='10'
+                            onchange="countdownValueOutput.value = this.value">
+                        <output id='countdownValueOutput'></output> 
+                    </div>
+                    <div>
+                        <input type="checkbox" id='autoplay'>
+                        <label for='autoplay'>Autoplay</label>
+                    </div>
+
+                    <span>Exercises:</span>
+                        <div id='exercises-def-area'>
+                            <div>
+                                <textarea id='exercises_def' cols='50'
+                                onchange='reload()'
+                                >
+#Core 1
+30/10
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+
+20/5
+# Core 2
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+Push up - side arm balance
+Squats
+
+
+Kote
+Kote-Men
+Do
+
+                            </textarea>
+                        </div>
+                        <button onclick='play()'>Done editing</button>
+                    </div>
                 </div>
-                <div>
-                    <input type="checkbox" id='autoplay'>
-                    <label for='autoplay'>Autoplay</label>
-                </div>
+                <div id='documentation'>
+                    <h2>Type or paste your exercises to the left.</h2>
 
-                <span>Exercises:</span>
-                <div>
-                    <textarea id='exercises_def' rows='30' cols='40'
-                    onchange='reload()'
-                    >
-    #Core 1
-    30/10
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
+                    <p>First line in a set defines work and rest intervals, thus below means 30 seconds work and 10 seconds rest:</p>
 
-    20/5
-    # Core 2
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
-    Push up - side arm balance
-    Squats
+                    <code><span class='work'>30</span>/<span class='rest'>10</code>
 
+                    <p>All other lines are names of exercises.</p>
 
-    Kote
-    Kote-Men
-    Do
+                    <p>A blank line creates a new set. Example:</p>
 
-                    </textarea>
-                </div>
-                <button onclick='play()'>Done editing</button>
+                    <pre>
+                    <code>
+<span class='work'>30</span>/<span class='rest'>10</span>
+Pushups
+Sit ups
+Plank
+
+<span class='work'>60</span>/<span class='rest'>20</span>
+Jumping jacks
+High Knees
+Squats
+                    </code>
+                    </pre>
+                    <h4>Advanced Features</h4>
+                    You can give your set a title by adding a line before work/rest definition starting with <code class='title'>#</code>:
+                    <pre><code>
+<span class='title'># Hard Set</span>
+<span class='work'>180</span>/<span class='rest'>5</span>
+Burpees
+Mountain Climbers
+Haya Suburi
+</code></pre>
+
+You can override the work for any exercise by putting the number of seconds after the exercise name in parenthesis:
+<pre>
+<code>
+<span class='work'>60</span>/<span class='rest'>10</span>
+Short exercise (10)
+Regular exercise
+Long exercise (120)
+</code></pre>
+
+A special exercise named <code class='rest'>rest</code> will be treated as a rest period, overriding the default rest period:
+<pre>
+<code>
+<span class='work'>60</span>/<span class='rest'>10</span>
+Push-up
+Burpees
+<span class='rest'>rest (30)</span>
+Sit-ups
+</code></pre>
+
+You can also have a rest/cooldown set by having <code class='rest'>rest (seconds)</code> as the only "exercise" in a set.
+<pre>
+<code>
+<span class='title'># First Set</span>
+<span class='work'>60</span>/<span class='rest'>10</span>
+Push ups
+Pull ups
+
+<span class='rest'>rest (90)</span>
+
+<span class='title'># Second Set</span>
+<span class='work'>60</span>/<span class='rest'>10</span>
+Push ups
+Pull ups
+
+</code></pre>
+<h4>Keyboard shortcuts</h4>
+<p>Press <code>E</code> from timer view to go to this view.</p>
+<p>Press <code>Ctrl+ENTER</code> from this view to go to timer view.</p>
             </div>
         </div>
     </div>
