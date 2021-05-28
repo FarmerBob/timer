@@ -11,13 +11,20 @@ body {
     margin: 0;
 }
 
-
 .work {
-  color: green;
+  color:  #3D9970;
 }
 
-.rest {
-  color:  #1461ed;
+.rest, .countdown #action_label {
+  color:  #0074D9;
+}
+
+.work #timer-display {
+  background-color:  #3D9970;
+}
+
+.rest #timer-display, #countdown-display {
+  background-color:  #0074D9;
 }
 
 .exercises div.exercise {
@@ -33,9 +40,6 @@ body {
 .exercises div.rest {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 20px;
-  /*font-style: oblique;*/
-  /*color: crimson;*/
-  color:  #1461ed;
   transition-property: font-size;
   transition-duration: 0.3s;
   cursor:  pointer;
@@ -55,7 +59,7 @@ body {
 
 .exercises div.current {
   font-weight: bold;
-  font-size: 40px;
+  font-size: 60px;
 }
 
 div.separator {
@@ -78,7 +82,6 @@ div.set-info {
     top: 0;
     padding-top: 20px;
     padding-bottom: 20px;
-    /*border-bottom: 1px solid black;*/
     font-style: oblique;
     font-weight: bold;
     cursor:  pointer;
@@ -99,7 +102,7 @@ div.set-info {
 }
 
 div.set-title {
-    font-size: 40px;
+    font-size: 35px;
     color: dimgray;
 }
 
@@ -119,7 +122,6 @@ div.set-time-info {
 }
 
 #timer-container {
-  /*opacity: .5;*/
   font-family: Arial, Helvetica, sans-serif;
   left: 0;
   width: 100%;
@@ -147,19 +149,14 @@ div.set-time-info {
 }
 
 .work #timer {
-  background-color: #4CAF50;
   color: white;
 }
 
 .rest #timer {
-  background-color:  #1461ed;
-  /*background-color: crimson;*/
   color: white;
 }
 
 .countdown #timer {
-  background-color:  #1461ed;
-  /*background-color: crimson;*/
   color: white;
 }
 
@@ -172,10 +169,6 @@ div.set-time-info {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 40px;
   text-align: center;
-}
-
-.countdown #action_label {
-  color:  #1461ed;
 }
 
 #start_container {
@@ -665,7 +658,7 @@ function updateUi() {
             id('timer-display').style.display = 'block';
             id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'START';
-            timerContainer.classList.remove('rest', 'work', 'countdown');
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('inactive');
             id("action_label").innerText = 'READY';
             break;
@@ -674,13 +667,13 @@ function updateUi() {
             id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'PAUSE';
             if(getCurrentInterval().type == EXERCISE_INTERVAL) {
-                timerContainer.classList.remove('rest', 'inactive', 'countdown');
+                timerContainer.classList.remove(...timerContainer.classList);
                 timerContainer.classList.add('work');
                 id('action_label').innerText = 
                     sets[currentSetIndex].intervals[currentSetInterval].name;
             } else {
                 timerContainer.classList.remove('work', 'inactive', 'countdown');
-                timerContainer.classList.add('rest');
+                timerContainer.classList.add('rest', 'rest-bgcolor');
                 id("action_label").innerText = "REST"
             }
             break;
@@ -688,12 +681,12 @@ function updateUi() {
             id('timer-display').style.display = 'block';
             id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'resume';
-            timerContainer.classList.remove('rest', 'work', 'contdown')
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('inactive');
             id("action_label").innerText = "PAUSED"
             break;
         case COUNTDOWN:
-            timerContainer.classList.remove('rest', 'work', 'inactive');
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('countdown');
             id('timer-display').style.display = 'none';
             id('countdown-display').style.display = 'block';
@@ -814,10 +807,11 @@ function updateExercisesUi() {
         let showRestPeriods = true;
         // Are there any custom rest intervals, or a rest interval that is the first or last 
         // interval in the set?
-        if (set.intervals.every((i) => i.type != REST_INTERVAL || i.duration == set.rest) &&
-            set.intervals[0].type != REST_INTERVAL && set.intervals.last() != REST_INTERVAL) {
-            showRestPeriods = false;
-        }
+        // Uncomment below to show rest periods only conditonally.
+        // if (set.intervals.every((i) => i.type != REST_INTERVAL || i.duration == set.rest) &&
+        //     set.intervals[0].type != REST_INTERVAL && set.intervals.last() != REST_INTERVAL) {
+        //     showRestPeriods = false;
+        // }
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
             const interval = set.intervals[intervalIndex];
