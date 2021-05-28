@@ -70,6 +70,7 @@ div.set-info {
   /*border-bottom: 1px solid black;*/
   font-style: oblique;
   font-weight: bold;
+  cursor:  pointer;
 }
 
 div.set-title {
@@ -735,6 +736,18 @@ function scrollToElement(exerciseElement) {
     window.scrollTo(0, scrollTo);
 }
 
+function switchToInterval(setIndex, intervalIndex) {
+    if (state == PAUSED || state == NOT_STARTED) {
+        currentSetIndex = setIndex;
+        currentSetInterval = intervalIndex;
+        remaining = getCurrentInterval().duration;
+        updateUi();
+    } else {
+        // Avoid accidental switching of exercises while playing. Pause instead.
+        pauseIfPlaying();
+    }
+}
+
 function updateExercisesUi() {
     let setsContainer = id("sets");
     // Clear all exercies
@@ -751,6 +764,8 @@ function updateExercisesUi() {
             setDiv.classList.add('rest-set');
         }
         const setInfo = document.createElement("div");
+        setInfo.onclick = (e) => switchToInterval(setIndex, /* intervalIndex= */ 0);
+
         setDiv.appendChild(setInfo);
         setInfo.classList.add('set-info');
         const setTitle = document.createElement("div");
@@ -795,17 +810,7 @@ function updateExercisesUi() {
                     intervalDiv.classList.add('custom');
                 }
             }
-            intervalDiv.onclick = (e) => {
-                if (state == PAUSED || state == NOT_STARTED) {
-                    currentSetIndex = setIndex;
-                    currentSetInterval = intervalIndex;
-                    remaining = getCurrentInterval().duration;
-                    updateUi();
-                } else {
-                    // Avoid accidental switching of exercises while playing. Pause instead.
-                    pauseIfPlaying();
-                }
-            }
+            intervalDiv.onclick = (e) => switchToInterval(setIndex, intervalIndex);
             const textNode = document.createTextNode(interval.name);
             intervalDiv.appendChild(textNode);
             const timeOverridden =
