@@ -11,19 +11,31 @@ body {
     margin: 0;
 }
 
+
+.work {
+  color: green;
+}
+
+.rest {
+  color:  #1461ed;
+}
+
 .exercises div.exercise {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 30px;
   transition-property: font-size;
   transition-duration: 0.3s;
   cursor:  pointer;
+  margin-top:  30px;
+  margin-bottom: 30px;
 }
 
 .exercises div.rest {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 20px;
   /*font-style: oblique;*/
-  color: crimson;
+  /*color: crimson;*/
+  color:  #1461ed;
   transition-property: font-size;
   transition-duration: 0.3s;
   cursor:  pointer;
@@ -59,26 +71,40 @@ div.separator {
 }
 
 div.set-info {
-  /*opacity: .5;*/
-  background-color: white;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: medium;
-  position: sticky;
-  top: 0;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  /*border-bottom: 1px solid black;*/
-  font-style: oblique;
-  font-weight: bold;
-  cursor:  pointer;
+    background-color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    position: sticky;
+    top: 0;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    /*border-bottom: 1px solid black;*/
+    font-style: oblique;
+    font-weight: bold;
+    cursor:  pointer;
+
+    display: flex;
+    background-color: whitesmoke;
+    border-style: solid;
+    border: #0000004d;
+    font-weight: bold;
+    border-bottom-style: solid;
+    border-color: darkgray;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 div.set-title {
     font-size: 40px;
+    color: dimgray;
 }
 
 .rest-set div.set-title {
-    color: crimson;
+    color: dimgray;
 }
 
 .rest-set .set-interval-time {
@@ -88,6 +114,8 @@ div.set-title {
 div.set-time-info {
     display: flex;
     justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 #timer-container {
@@ -124,12 +152,14 @@ div.set-time-info {
 }
 
 .rest #timer {
-  background-color: crimson;
+  background-color:  #1461ed;
+  /*background-color: crimson;*/
   color: white;
 }
 
 .countdown #timer {
-  background-color: crimson;
+  background-color:  #1461ed;
+  /*background-color: crimson;*/
   color: white;
 }
 
@@ -144,16 +174,8 @@ div.set-time-info {
   text-align: center;
 }
 
-.work #action_label {
-  color: green;
-}
-
-.rest #action_label {
-  color: crimson;
-}
-
 .countdown #action_label {
-  color: crimson;
+  color:  #1461ed;
 }
 
 #start_container {
@@ -207,14 +229,6 @@ code {
 
 pre {
     margin-top: 0;
-}
-
-#documentation .work {
-    color: green;
-}
-
-#documentation .rest {
-    color: crimson;
 }
 
 #documentation .title {
@@ -470,7 +484,7 @@ function toggleState() {
             break;
         case NOT_STARTED:
             countdownSeconds = id("countdown-start").value;
-            if (countdownSeconds > 0) {
+            if (countdownSeconds > 0 && getCurrentInterval().type == EXERCISE_INTERVAL) {
                 previousState = state;
                 state = COUNTDOWN;
             } else {
@@ -778,7 +792,16 @@ function updateExercisesUi() {
         const setIntervalTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setIntervalTimeLabel);
         setIntervalTimeLabel.classList.add("set-interval-time");
-        setIntervalTimeLabel.innerText = 'Work: ' + set.work + ', rest: ' + set.rest;
+        const workLabel = document.createElement("span");
+        setIntervalTimeLabel.appendChild(workLabel);
+        workLabel.classList.add('work');
+        workLabel.innerText = 'Work: ' + set.work;
+        const space = document.createTextNode(' ');
+        setIntervalTimeLabel.appendChild(space);
+        const restLabel = document.createElement("span");
+        setIntervalTimeLabel.appendChild(restLabel);
+        restLabel.classList.add('rest');
+        restLabel.innerText = 'Rest: ' + set.rest;
 
         const setRemainingTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setRemainingTimeLabel);
