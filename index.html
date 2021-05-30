@@ -43,6 +43,8 @@ body {
   transition-property: font-size;
   transition-duration: 0.3s;
   cursor:  pointer;
+  margin-top: 30px;
+  margin-botom: 30px;
 }
 
 .exercises div.rest.custom {
@@ -75,7 +77,6 @@ div.separator {
 }
 
 div.set-info {
-    background-color: white;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     position: sticky;
@@ -88,6 +89,7 @@ div.set-info {
 
     display: flex;
     background-color: whitesmoke;
+    /*background-color: white;*/
     border-style: solid;
     border: #0000004d;
     font-weight: bold;
@@ -775,8 +777,10 @@ function updateExercisesUi() {
 
         setDiv.appendChild(setInfo);
         setInfo.classList.add('set-info');
+        const setTitleContainer = document.createElement("div");
+        setInfo.appendChild(setTitleContainer);
         const setTitle = document.createElement("div");
-        setInfo.appendChild(setTitle);
+        setTitleContainer.appendChild(setTitle);
         setTitle.classList.add('set-title')
         setTitle.innerText = set.title;
         const setTimeInfo = document.createElement("div");
