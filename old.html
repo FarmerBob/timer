@@ -11,20 +11,40 @@ body {
     margin: 0;
 }
 
+.work {
+  color:  #3D9970;
+}
+
+.rest, .countdown #action_label {
+  color:  #0074D9;
+}
+
+.work #timer-display {
+  background-color:  #3D9970;
+}
+
+.rest #timer-display, #countdown-display {
+  background-color:  #0074D9;
+}
+
 .exercises div.exercise {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 30px;
   transition-property: font-size;
   transition-duration: 0.3s;
+  cursor:  pointer;
+  margin-top:  30px;
+  margin-bottom: 30px;
 }
 
 .exercises div.rest {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 20px;
-  /*font-style: oblique;*/
-  color: crimson;
   transition-property: font-size;
   transition-duration: 0.3s;
+  cursor:  pointer;
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .exercises div.rest.custom {
@@ -41,7 +61,7 @@ body {
 
 .exercises div.current {
   font-weight: bold;
-  font-size: 40px;
+  font-size: 60px;
 }
 
 div.separator {
@@ -57,25 +77,39 @@ div.separator {
 }
 
 div.set-info {
-  /*opacity: .5;*/
-  background-color: white;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: medium;
-  position: sticky;
-  top: 0;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  /*border-bottom: 1px solid black;*/
-  font-style: oblique;
-  font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    position: sticky;
+    top: 0;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-style: oblique;
+    font-weight: bold;
+    cursor:  pointer;
+
+    display: flex;
+    background-color: whitesmoke;
+    /*background-color: white;*/
+    border-style: solid;
+    border: #0000004d;
+    font-weight: bold;
+    border-bottom-style: solid;
+    border-color: darkgray;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 div.set-title {
-    font-size: 40px;
+    font-size: 35px;
+    color: dimgray;
 }
 
 .rest-set div.set-title {
-    color: crimson;
+    color: dimgray;
 }
 
 .rest-set .set-interval-time {
@@ -85,10 +119,11 @@ div.set-title {
 div.set-time-info {
     display: flex;
     justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 #timer-container {
-  /*opacity: .5;*/
   font-family: Arial, Helvetica, sans-serif;
   left: 0;
   width: 100%;
@@ -116,17 +151,14 @@ div.set-time-info {
 }
 
 .work #timer {
-  background-color: #4CAF50;
   color: white;
 }
 
 .rest #timer {
-  background-color: crimson;
   color: white;
 }
 
 .countdown #timer {
-  background-color: crimson;
   color: white;
 }
 
@@ -139,18 +171,6 @@ div.set-time-info {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 40px;
   text-align: center;
-}
-
-.work #action_label {
-  color: green;
-}
-
-.rest #action_label {
-  color: crimson;
-}
-
-.countdown #action_label {
-  color: crimson;
 }
 
 #start_container {
@@ -172,7 +192,6 @@ div.set-time-info {
   font-size: 32px;
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
-  text-transform: uppercase;
 }
 
 #workout-info {
@@ -205,14 +224,6 @@ code {
 
 pre {
     margin-top: 0;
-}
-
-#documentation .work {
-    color: green;
-}
-
-#documentation .rest {
-    color: crimson;
 }
 
 #documentation .title {
@@ -407,6 +418,7 @@ const DEFAULT_WORK = 20;
 const DEFAULT_REST = 5;
 
 const COUNTDOWN_START_SECONDS = 3;
+
 let countdownSeconds = COUNTDOWN_START_SECONDS
 let state = NOT_STARTED;
 let previousState = NOT_STARTED;
@@ -467,7 +479,7 @@ function toggleState() {
             break;
         case NOT_STARTED:
             countdownSeconds = id("countdown-start").value;
-            if (countdownSeconds > 0) {
+            if (countdownSeconds > 0 && getCurrentInterval().type == EXERCISE_INTERVAL) {
                 previousState = state;
                 state = COUNTDOWN;
             } else {
@@ -528,13 +540,19 @@ function updateCountdown() {
 
 function updateSecond() {
     remaining--;
+    const isLastInterval = currentSetInterval >= sets[currentSetIndex].intervals.length - 1;
+    if (getCurrentInterval().type == REST_INTERVAL && remaining > 0 && remaining <= 3 && !isLastInterval) {
+        // Do a beep on second flip to signal that rest interval ends soon and exercise will begin 
+        // soon.
+        mediumBeep();
+    }
     if(remaining <= 0) {
-        longBeep();
-        if(currentSetInterval < sets[currentSetIndex].intervals.length - 1) {
-            // This is not the last interval in the set. Move on to the next one.
+        if(!isLastInterval) {
+            longBeep();
             currentSetInterval++;
             remaining = getCurrentInterval().duration;
         } else {
+            endOfSetBeep();
             // We just finished the last interval in the set.
             // Move on to the next set, or back to the first set.
             currentSetInterval = 0;
@@ -572,13 +590,17 @@ function define() {
         return;
     }
 
-    if (state == COUNTDOWN || state == PLAYING) {
-        toggleState();
-    }
+    pauseIfPlaying();
 
     isDefineMode = true;
     updateUi();
     id('exercises_def').focus();
+}
+
+function pauseIfPlaying() {
+    if (state == COUNTDOWN || state == PLAYING) {
+        toggleState();
+    }
 }
 
 
@@ -643,25 +665,23 @@ function updateUi() {
         case NOT_STARTED:
             id('timer-display').style.display = 'block';
             id('countdown-display').style.display = 'none';
-            id('start_button').innerText = 'start';
-            timerContainer.classList.remove('rest', 'work', 'countdown');
+            id('start_button').innerText = 'START';
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('inactive');
             id("action_label").innerText = 'READY';
             break;
         case PLAYING:
             id('timer-display').style.display = 'block';
             id('countdown-display').style.display = 'none';
-            if(id('start_button').innerText != 'pause') {
-                id('start_button').innerText = 'pause';
-            }
+            id('start_button').innerText = 'PAUSE';
             if(getCurrentInterval().type == EXERCISE_INTERVAL) {
-                timerContainer.classList.remove('rest', 'inactive', 'countdown');
+                timerContainer.classList.remove(...timerContainer.classList);
                 timerContainer.classList.add('work');
                 id('action_label').innerText = 
                     sets[currentSetIndex].intervals[currentSetInterval].name;
             } else {
                 timerContainer.classList.remove('work', 'inactive', 'countdown');
-                timerContainer.classList.add('rest');
+                timerContainer.classList.add('rest', 'rest-bgcolor');
                 id("action_label").innerText = "REST"
             }
             break;
@@ -669,17 +689,17 @@ function updateUi() {
             id('timer-display').style.display = 'block';
             id('countdown-display').style.display = 'none';
             id('start_button').innerText = 'resume';
-            timerContainer.classList.remove('rest', 'work', 'contdown')
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('inactive');
             id("action_label").innerText = "PAUSED"
             break;
         case COUNTDOWN:
-            timerContainer.classList.remove('rest', 'work', 'inactive');
+            timerContainer.classList.remove(...timerContainer.classList);
             timerContainer.classList.add('countdown');
             id('timer-display').style.display = 'none';
             id('countdown-display').style.display = 'block';
             id("action_label").innerText = 'GET READY';
-            id('start_button').innerText = 'Cancel';
+            id('start_button').innerText = 'CANCEL';
             break;
     }
     updateRemainingTime();
@@ -731,6 +751,18 @@ function scrollToElement(exerciseElement) {
     window.scrollTo(0, scrollTo);
 }
 
+function switchToInterval(setIndex, intervalIndex) {
+    if (state == PAUSED || state == NOT_STARTED) {
+        currentSetIndex = setIndex;
+        currentSetInterval = intervalIndex;
+        remaining = getCurrentInterval().duration;
+        updateUi();
+    } else {
+        // Avoid accidental switching of exercises while playing. Pause instead.
+        pauseIfPlaying();
+    }
+}
+
 function updateExercisesUi() {
     let setsContainer = id("sets");
     // Clear all exercies
@@ -747,10 +779,14 @@ function updateExercisesUi() {
             setDiv.classList.add('rest-set');
         }
         const setInfo = document.createElement("div");
+        setInfo.onclick = (e) => switchToInterval(setIndex, /* intervalIndex= */ 0);
+
         setDiv.appendChild(setInfo);
         setInfo.classList.add('set-info');
+        const setTitleContainer = document.createElement("div");
+        setInfo.appendChild(setTitleContainer);
         const setTitle = document.createElement("div");
-        setInfo.appendChild(setTitle);
+        setTitleContainer.appendChild(setTitle);
         setTitle.classList.add('set-title')
         setTitle.innerText = set.title;
         const setTimeInfo = document.createElement("div");
@@ -759,7 +795,16 @@ function updateExercisesUi() {
         const setIntervalTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setIntervalTimeLabel);
         setIntervalTimeLabel.classList.add("set-interval-time");
-        setIntervalTimeLabel.innerText = 'Work: ' + set.work + ', rest: ' + set.rest;
+        const workLabel = document.createElement("span");
+        setIntervalTimeLabel.appendChild(workLabel);
+        workLabel.classList.add('work');
+        workLabel.innerText = 'Work: ' + set.work;
+        const space = document.createTextNode(' ');
+        setIntervalTimeLabel.appendChild(space);
+        const restLabel = document.createElement("span");
+        setIntervalTimeLabel.appendChild(restLabel);
+        restLabel.classList.add('rest');
+        restLabel.innerText = 'Rest: ' + set.rest;
 
         const setRemainingTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setRemainingTimeLabel);
@@ -772,10 +817,11 @@ function updateExercisesUi() {
         let showRestPeriods = true;
         // Are there any custom rest intervals, or a rest interval that is the first or last 
         // interval in the set?
-        if (set.intervals.every((i) => i.type != REST_INTERVAL || i.duration == set.rest) &&
-            set.intervals[0].type != REST_INTERVAL && set.intervals.last() != REST_INTERVAL) {
-            showRestPeriods = false;
-        }
+        // Uncomment below to show rest periods only conditonally.
+        // if (set.intervals.every((i) => i.type != REST_INTERVAL || i.duration == set.rest) &&
+        //     set.intervals[0].type != REST_INTERVAL && set.intervals.last() != REST_INTERVAL) {
+        //     showRestPeriods = false;
+        // }
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
             const interval = set.intervals[intervalIndex];
@@ -791,14 +837,7 @@ function updateExercisesUi() {
                     intervalDiv.classList.add('custom');
                 }
             }
-            intervalDiv.onclick = (e) => {
-                if (state == PAUSED || state == NOT_STARTED) {
-                    currentSetIndex = setIndex;
-                    currentSetInterval = intervalIndex;
-                    remaining = getCurrentInterval().duration;
-                    updateUi();
-                }
-            }
+            intervalDiv.onclick = (e) => switchToInterval(setIndex, intervalIndex);
             const textNode = document.createTextNode(interval.name);
             intervalDiv.appendChild(textNode);
             const timeOverridden =
@@ -922,8 +961,22 @@ function shortBeep() {
     beep(100);
 }
 
+function mediumBeep() {
+    beep(300);
+}
+
 function longBeep() {
     beep(1000);
+}
+
+function endOfSetBeep() {
+    beep(300);
+    setTimeout(() => {
+        beep(300);
+        setTimeout(() => {
+            beep(1000);
+        }, 600)
+    }, 600);
 }
 
 function beep(duration) {
