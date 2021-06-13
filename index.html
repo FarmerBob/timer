@@ -540,9 +540,14 @@ function updateCountdown() {
 
 function updateSecond() {
     remaining--;
+    const isLastInterval = currentSetInterval >= sets[currentSetIndex].intervals.length - 1;
+    if (getCurrentInterval().type == REST_INTERVAL && remaining > 0 && remaining <= 3 && !isLastInterval) {
+        // Do a beep on second flip to signal that rest interval ends soon and exercise will begin 
+        // soon.
+        mediumBeep();
+    }
     if(remaining <= 0) {
-        if(currentSetInterval < sets[currentSetIndex].intervals.length - 1) {
-            // This is not the last interval in the set. Move on to the next one.
+        if(!isLastInterval) {
             longBeep();
             currentSetInterval++;
             remaining = getCurrentInterval().duration;
@@ -954,6 +959,10 @@ function reload() {
 
 function shortBeep() {
     beep(100);
+}
+
+function mediumBeep() {
+    beep(300);
 }
 
 function longBeep() {
