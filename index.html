@@ -541,12 +541,13 @@ function updateCountdown() {
 function updateSecond() {
     remaining--;
     if(remaining <= 0) {
-        longBeep();
         if(currentSetInterval < sets[currentSetIndex].intervals.length - 1) {
             // This is not the last interval in the set. Move on to the next one.
+            longBeep();
             currentSetInterval++;
             remaining = getCurrentInterval().duration;
         } else {
+            endOfSetBeep();
             // We just finished the last interval in the set.
             // Move on to the next set, or back to the first set.
             currentSetInterval = 0;
@@ -957,6 +958,16 @@ function shortBeep() {
 
 function longBeep() {
     beep(1000);
+}
+
+function endOfSetBeep() {
+    beep(300);
+    setTimeout(() => {
+        beep(300);
+        setTimeout(() => {
+            beep(1000);
+        }, 600)
+    }, 600);
 }
 
 function beep(duration) {
