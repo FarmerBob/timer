@@ -19,11 +19,11 @@ body {
   color:  #0074D9;
 }
 
-.work #timer-display, .work.progress-bar {
+.work #timer-display, .work.progress-bar-chunk {
   background-color:  #3D9970;
 }
 
-.rest #timer-display, #countdown-display, .rest.progress-bar {
+.rest #timer-display, #countdown-display, .rest.progress-bar-chunk {
   background-color:  #0074D9;
 }
 
@@ -112,16 +112,16 @@ div.set-title {
 }
 
 
-.progress-bar-container {
+.progress-bar {
     display: flex;
 }
 
-.progress-bar {
+.progress-bar-chunk {
     height:  10px;
     opacity: 0.5;
 }
 
-.completed.progress-bar {
+.completed .progress-bar-chunk {
     opacity: 1;
 }
 
@@ -646,12 +646,26 @@ function updateRemainingTime() {
 }
 
 function updateRemainingTimeInSet(setIndex, timeRemaining) {
-   const mins = Math.floor(timeRemaining / 60);
-   const secs = timeRemaining % 60;
+    const mins = Math.floor(timeRemaining / 60);
+    const secs = timeRemaining % 60;
 
-   document
+    document
        .querySelector("#set" + setIndex + " .set-remaining-time")
        .innerText = mins + "m " + secs + "s";
+
+    const completedProgressBar = document
+       .querySelector("#set" + setIndex + " .progress-bar.completed");
+    const width = completedProgressBar.offsetWidth;
+    console.log("width: " + width);
+    const totalTimeInSet = getTotalTimeInSet(setIndex);
+    console.log("totalTimeInSet: " + totalTimeInSet);
+    const clipValue = timeRemaining * width / totalTimeInSet;
+    console.log("Setting clip value: " + clipValue);
+
+
+    document
+       .querySelector("#set" + setIndex + " .progress-bar.completed")
+       .style['clip-path'] = `inset(0 ${clipValue}px 0 0)`;
 
 }
 
@@ -830,13 +844,14 @@ function updateExercisesUi() {
         setTimeInfo.appendChild(setRemainingTimeLabel);
         setRemainingTimeLabel.classList.add("set-remaining-time");
 
-        const progressBarContainer = document.createElement("div");
-        setInfo.appendChild(progressBarContainer);
-        progressBarContainer.classList.add('progress-bar-container');
+        const progressBar = document.createElement("div");
+        setInfo.appendChild(progressBar);
+        progressBar.classList.add('progress-bar');
 
-        const completedProgressBarContainer = document.createElement("div");
-        setInfo.appendChild(completedProgressBarContainer);
-        completedProgressBarContainer.classList.add('progress-bar-container');
+        const completedProgressBar = document.createElement("div");
+        setInfo.appendChild(completedProgressBar);
+        completedProgressBar.classList.add('progress-bar');
+        completedProgressBar.classList.add('completed');
 
         const exercisesDiv = document.createElement("div");
         setDiv.appendChild(exercisesDiv);
@@ -878,38 +893,26 @@ function updateExercisesUi() {
                 timeNode.innerText = " (" + interval.duration + " seconds) ";
             }
 
-            // Add the progress bar for this interval
-            const progressBar = document.createElement("div");
-            progressBarContainer.appendChild(progressBar);
-            progressBar.classList.add('progress-bar')
-            // Flex attribute will set the 'flex-grow' which is the proportion for this div to
-            // take up. Set it to the duration, which will automatically scale it to the duration
-            // of the interval.
-            progressBar.style.flex = interval.duration;
-            if (interval.type == EXERCISE_INTERVAL) {
-                progressBar.classList.add("work");
-            }
-            if (interval.type == REST_INTERVAL) {
-                progressBar.classList.add("rest");
-            }
-
-            //////
-            if(intervalIndex == 0) {
-                const completedProgressBar = document.createElement("div");
-                completedProgressBarContainer.appendChild(completedProgressBar);
-                completedProgressBar.classList.add("progress-bar");
-                completedProgressBar.classList.add("completed");
-                completedProgressBar.classList.add("work");
-                completedProgressBar.style.flex = 10;
-
-                const div = document.createElement("div");
-                completedProgressBarContainer.appendChild(div);
-                div.classList.add("progress-bar");
-                div.style.flex = 90;
-                div.visibility = 'hidden';
-            }
-            //////
+            // Add the progress bar chunk for this interval
+            addProgressBarChunk(progressBar, interval);
+            addProgressBarChunk(completedProgressBar, interval);
         }
+    }
+}
+
+function addProgressBarChunk(progressBar, interval) {
+    const progressBarChunk = document.createElement("div");
+    progressBar.appendChild(progressBarChunk);
+    progressBarChunk.classList.add('progress-bar-chunk');
+    // Flex attribute will set the 'flex-grow' which is the proportion for this div to
+    // take up. Set it to the duration, which will automatically scale it to the duration
+    // of the interval.
+    progressBarChunk.style.flex = interval.duration;
+    if (interval.type == EXERCISE_INTERVAL) {
+        progressBarChunk.classList.add("work");
+    }
+    if (interval.type == REST_INTERVAL) {
+        progressBarChunk.classList.add("rest");
     }
 }
 
