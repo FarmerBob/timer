@@ -19,11 +19,11 @@ body {
   color:  #0074D9;
 }
 
-.work #timer-display {
+.work #timer-display, .work.progress-bar {
   background-color:  #3D9970;
 }
 
-.rest #timer-display, #countdown-display {
+.rest #timer-display, #countdown-display, .rest.progress-bar {
   background-color:  #0074D9;
 }
 
@@ -82,12 +82,11 @@ div.set-info {
     position: sticky;
     top: 0;
     padding-top: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 10px;
     font-style: oblique;
     font-weight: bold;
     cursor:  pointer;
 
-    display: flex;
     background-color: whitesmoke;
     /*background-color: white;*/
     border-style: solid;
@@ -95,17 +94,35 @@ div.set-info {
     font-weight: bold;
     border-bottom-style: solid;
     border-color: darkgray;
-    flex-direction: row;
-    justify-content: space-between;
     margin-left: -8px;
     margin-right: -8px;
     padding-left: 8px;
     padding-right: 8px;
 }
 
+div.set-core-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
 div.set-title {
     font-size: 35px;
     color: dimgray;
+}
+
+
+.progress-bar-container {
+    display: flex;
+}
+
+.progress-bar {
+    height:  10px;
+    opacity: 0.5;
+}
+
+.completed.progress-bar {
+    opacity: 1;
 }
 
 .rest-set div.set-title {
@@ -780,18 +797,20 @@ function updateExercisesUi() {
             setDiv.classList.add('rest-set');
         }
         const setInfo = document.createElement("div");
-        setInfo.onclick = (e) => switchToInterval(setIndex, /* intervalIndex= */ 0);
-
         setDiv.appendChild(setInfo);
+        setInfo.onclick = (e) => switchToInterval(setIndex, /* intervalIndex= */ 0);
         setInfo.classList.add('set-info');
+        const setCoreInfo = document.createElement("div");
+        setInfo.appendChild(setCoreInfo);
+        setCoreInfo.classList.add('set-core-info');
         const setTitleContainer = document.createElement("div");
-        setInfo.appendChild(setTitleContainer);
+        setCoreInfo.appendChild(setTitleContainer);
         const setTitle = document.createElement("div");
         setTitleContainer.appendChild(setTitle);
         setTitle.classList.add('set-title')
         setTitle.innerText = set.title;
         const setTimeInfo = document.createElement("div");
-        setInfo.appendChild(setTimeInfo);
+        setCoreInfo.appendChild(setTimeInfo);
         setTimeInfo.classList.add("set-time-info");
         const setIntervalTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setIntervalTimeLabel);
@@ -810,6 +829,14 @@ function updateExercisesUi() {
         const setRemainingTimeLabel = document.createElement("div");
         setTimeInfo.appendChild(setRemainingTimeLabel);
         setRemainingTimeLabel.classList.add("set-remaining-time");
+
+        const progressBarContainer = document.createElement("div");
+        setInfo.appendChild(progressBarContainer);
+        progressBarContainer.classList.add('progress-bar-container');
+
+        const completedProgressBarContainer = document.createElement("div");
+        setInfo.appendChild(completedProgressBarContainer);
+        completedProgressBarContainer.classList.add('progress-bar-container');
 
         const exercisesDiv = document.createElement("div");
         setDiv.appendChild(exercisesDiv);
@@ -850,6 +877,38 @@ function updateExercisesUi() {
                 timeNode.classList.add('time-override');
                 timeNode.innerText = " (" + interval.duration + " seconds) ";
             }
+
+            // Add the progress bar for this interval
+            const progressBar = document.createElement("div");
+            progressBarContainer.appendChild(progressBar);
+            progressBar.classList.add('progress-bar')
+            // Flex attribute will set the 'flex-grow' which is the proportion for this div to
+            // take up. Set it to the duration, which will automatically scale it to the duration
+            // of the interval.
+            progressBar.style.flex = interval.duration;
+            if (interval.type == EXERCISE_INTERVAL) {
+                progressBar.classList.add("work");
+            }
+            if (interval.type == REST_INTERVAL) {
+                progressBar.classList.add("rest");
+            }
+
+            //////
+            if(intervalIndex == 0) {
+                const completedProgressBar = document.createElement("div");
+                completedProgressBarContainer.appendChild(completedProgressBar);
+                completedProgressBar.classList.add("progress-bar");
+                completedProgressBar.classList.add("completed");
+                completedProgressBar.classList.add("work");
+                completedProgressBar.style.flex = 10;
+
+                const div = document.createElement("div");
+                completedProgressBarContainer.appendChild(div);
+                div.classList.add("progress-bar");
+                div.style.flex = 90;
+                div.visibility = 'hidden';
+            }
+            //////
         }
     }
 }
