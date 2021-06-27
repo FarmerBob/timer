@@ -884,13 +884,17 @@ function updateExercisesUi() {
         
         for(let intervalIndex = 0; intervalIndex < set.intervals.length; intervalIndex++) {
             const interval = set.intervals[intervalIndex];
+            if (interval.type == REST_INTERVAL && interval.duration <= 0) {
+                // Skip rest intervals of 0 duration.
+                continue;
+            }
             const intervalDiv = document.createElement("div");
             exercisesDiv.appendChild(intervalDiv);
             intervalDiv.id = 's' + setIndex + 'e' + intervalIndex;
-            if (set.intervals[intervalIndex].type == EXERCISE_INTERVAL) {
+            if (interval.type == EXERCISE_INTERVAL) {
                 intervalDiv.classList.add('exercise');
             }
-            if (set.intervals[intervalIndex].type == REST_INTERVAL) {
+            if (interval.type == REST_INTERVAL) {
                 intervalDiv.classList.add('rest');
                 if (showRestPeriods) {
                     intervalDiv.classList.add('custom');
