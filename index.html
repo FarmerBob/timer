@@ -112,8 +112,15 @@ div.set-title {
 }
 
 
+.progress-bar-container {
+    margin-bottom: 8px;
+
+}
 .progress-bar {
     display: flex;
+    position: absolute;
+    left: 8px;
+    right: 8px;
 }
 
 .progress-bar-chunk {
@@ -844,12 +851,16 @@ function updateExercisesUi() {
         setTimeInfo.appendChild(setRemainingTimeLabel);
         setRemainingTimeLabel.classList.add("set-remaining-time");
 
+        const progressBarContainer = document.createElement("div");
+        setInfo.appendChild(progressBarContainer);
+        progressBarContainer.classList.add('progress-bar-container');
+
         const progressBar = document.createElement("div");
-        setInfo.appendChild(progressBar);
+        progressBarContainer.appendChild(progressBar);
         progressBar.classList.add('progress-bar');
 
         const completedProgressBar = document.createElement("div");
-        setInfo.appendChild(completedProgressBar);
+        progressBarContainer.appendChild(completedProgressBar);
         completedProgressBar.classList.add('progress-bar');
         completedProgressBar.classList.add('completed');
 
