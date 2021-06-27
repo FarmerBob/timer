@@ -19,12 +19,20 @@ body {
   color:  #0074D9;
 }
 
-.work #timer-display, .work.progress-bar-chunk {
+.work #timer-display {
   background-color:  #3D9970;
 }
 
-.rest #timer-display, #countdown-display, .rest.progress-bar-chunk {
+.rest #timer-display, #countdown-display {
   background-color:  #0074D9;
+}
+
+.work.progress-bar-chunk {
+  background-color: #07b707;
+}
+
+.rest.progress-bar-chunk {
+  background-color: #0040ff;
 }
 
 .exercises div.exercise {
@@ -663,16 +671,12 @@ function updateRemainingTimeInSet(setIndex, timeRemaining) {
     const completedProgressBar = document
        .querySelector("#set" + setIndex + " .progress-bar.completed");
     const width = completedProgressBar.offsetWidth;
-    console.log("width: " + width);
     const totalTimeInSet = getTotalTimeInSet(setIndex);
-    console.log("totalTimeInSet: " + totalTimeInSet);
-    const clipValue = timeRemaining * width / totalTimeInSet;
-    console.log("Setting clip value: " + clipValue);
-
+    const clipPercentage = timeRemaining * 100 / totalTimeInSet;
 
     document
        .querySelector("#set" + setIndex + " .progress-bar.completed")
-       .style['clip-path'] = `inset(0 ${clipValue}px 0 0)`;
+       .style['clip-path'] = `inset(0 ${clipPercentage}% 0 0)`;
 
 }
 
