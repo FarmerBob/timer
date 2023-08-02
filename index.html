@@ -311,6 +311,12 @@ pre {
                         <input type="checkbox" id='autoplay'>
                         <label for='autoplay'>Autoplay</label>
                     </div>
+                    <div>
+                        <label for='sound-volume'>Sound volume</label>
+                        <input type="range" id='sound-volume' min='0' max='10'
+                            onchange="soundVolumeValueOutput.value = this.value">
+                        <output id='soundVolumeValueOutput'></output>
+                    </div>
 
                     <span>Exercises:</span>
                         <div id='exercises-def-area'>
@@ -466,6 +472,17 @@ let remaining = 0;
 
 window.onresize = updateUi;
 
+soundVolumeValueOutput.value = 6;
+
+const storedVolume = localStorage.getItem('soundVolume');
+if (storedVolume != null) {
+    const storedVolumeInt = parseInt(storedVolume);
+    if (!isNaN(storedVolumeInt) && storedVolumeInt >= 0 && storedVolumeInt <= 10) {
+        id("sound-volume").value = storedVolumeInt;
+        soundVolumeValueOutput.value = storedVolumeInt;
+    }
+}
+
 const storedExercises = localStorage.getItem('exercises');
 if (storedExercises != null && storedExercises.trim() != "") {
     id('exercises_def').value = storedExercises;
@@ -616,6 +633,7 @@ function play() {
     const exercisesString = id("exercises_def").value;
     localStorage.setItem('exercises', exercisesString);
     localStorage.setItem('countdownStart', id("countdown-start").value);
+    localStorage.setItem('soundVolume', id("sound-volume").value);
     updateUi();
 }
 
@@ -1070,7 +1088,7 @@ function beep(duration) {
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    gainNode.gain.value = 0.7;
+    gainNode.gain.value = soundVolumeValueOutput.value / 10;
     oscillator.frequency.value = 490;
     oscillator.type = 'triangle';
 
